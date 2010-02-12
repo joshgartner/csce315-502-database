@@ -5,9 +5,12 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 enum {EQ, NEQ, LT, GT, LTE, GTE};
 
 class Relation{
+public:
     Relation();  // Create empty relation (otherwise known as a table)
     Relation(string name, vector<string> column_names, vector<string> types, vector<string> primary_keys);  // Create relation with given data
     ~Relation(); // Deconstructor
@@ -32,7 +35,7 @@ class Relation{
     /* The queries should preserve the relation provided, so always create a new one and return that.
        All of these should return NULL if things go bad, like vectors don't match up or something.
     */
-    Relation select(string name, Relation r, vector<string> lhs, vector<string> rhs, vector<int> ops);
+    Relation select(string name, Relation rela, vector<string> lhs, vector<string> rhs, vector<int> ops);
         /* Input will look like "select (x1 == y1, x2 != y2) r"
            So use the vector indices to line up expressions, and pull attributes (column names)
            from the relation r.  You'll probably use a switch statement on ops.  So find lhs[0] in r, 
@@ -40,12 +43,12 @@ class Relation{
            When the condition is true, take that row and add it to the relation you are going to return (named name).
         */
     
-    Relation project(string name, Relation r, vector<string> columns);
+    Relation project(string name, Relation rela, vector<string> columns);
         /* Go through r and steal all the columns with the same names found in "columns"  add these to another relation 
            called "name" and return it.
         */
         
-    Relation rename(string name, Relation r, vector<string> attr_list);
+    Relation rename(string name, Relation rela, vector<string> attr_list);
         /* Attr_list is a bunch of column names corresponding to r's columns.  Rename r's columns with the ones
            provided, and return the new relation named "name" with renamed columns.
         */
