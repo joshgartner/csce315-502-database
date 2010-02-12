@@ -43,51 +43,51 @@ void Relation::display(){
    and then for that whole vector, compare it to rhs[0] with the given operation.
    When the condition is true, take that row and add it to the relation you are going to return (named name).
 */
-Relation Relation::select(string name, Relation r, vector<string> lhs, vector<string> rhs, vector<int> ops){
-	Relation r;
-	return r;
+Relation Relation::select(string name, Relation rela, vector<string> lhs, vector<string> rhs, vector<int> ops){
+	Relation relation;
+	return relation;
 }
 
 /* FIXME: Go through r and steal all the columns with the same names found in "columns"  add these to another relation 
    called "name" and return it.
 */
-Relation Relation::project(string name, Relation r, vector<string> columns){
-	Relation r;
-	return r;
+Relation Relation::project(string name, Relation rela, vector<string> columns){
+	Relation relation;
+	return relation;
 }
 
 /* FIXME: Attr_list is a bunch of column names corresponding to r's columns.  Rename r's columns with the ones
    provided, and return the new relation named "name" with renamed columns.
 */
-Relation Relation::rename(string name, Relation r, vector<string> attr_list){
-	Relation r;
-	return r;
+Relation Relation::rename(string name, Relation rela, vector<string> attr_list){
+	Relation relation;
+	return relation;
 }
 
 /* FIXME:
 */
 Relation Relation::union_of(string name, Relation r1, Relation r2){
-	Relation r;
-	return r;
+	Relation relation;
+	return relation;
 }
 
 /* FIXME:
 */
 Relation Relation::difference(string name, Relation r1, Relation r2){
-	Relation r;
-	return r;
+	Relation relation;
+	return relation;
 }
 
 /* FIXME:
 */
 Relation Relation::x_product(string name, Relation r1, Relation r2){
-	Relation r;
-	return r;
+	Relation relation;
+	return relation;
 }
 
 /* FIXME:
 */
 Relation Relation::natural_join(string name, Relation r1, Relation r2){
-	Relation r;
-	return r;
+	Relation relation;
+	return relation;
 }

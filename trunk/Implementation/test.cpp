@@ -14,14 +14,14 @@ string pass3  = "INSERT INTO animals VALUES FROM (\"Spot\", \"dog\", 10);";
 string pass4  = "INSERT INTO animals VALUES FROM (\"Snoopy\", \"dog\", 3);";
 string pass5  = "INSERT INTO animals VALUES FROM (\"Tweety\", \"bird\", 1);";
 string pass6  = "INSERT INTO animals VALUES FROM (\"Joe\", \"bird\", 2);";
-string pass7  = "dogs <- select (kind == "dog") animals;";
+string pass7  = "dogs <- select (kind == \"dog\") animals;";
 string pass8  = "old_dogs <- select (age > 10) dogs;";
-string pass9  = "cats_or_dogs <- dogs + (select (kind == "cat") animals;";
+string pass9  = "cats_or_dogs <- dogs + (select (kind == \"cat\") animals;";
 string pass10 = "CREATE TABLE species (kind VARCHAR(10)) PRIMARY KEY (kind);";
 string pass11 = "INSERT INTO species VALUES FROM RELATION project (kind) animals;";
 string pass12 = "a <- rename (aname, akind) (project (name, kind) animals;";
 string pass13 = "common_names <- project (name) (select (aname == name, akind != kind) (a * animals);";
-string pass13 = "answer <- common_names;";
+string pass14 = "answer <- common_names;";
 
 string fail1 = "BAD input hahaha;";
 string fail2 = "INSERTINTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
@@ -49,6 +49,7 @@ int main(){
 	test_str.push_back(pass11);
 	test_str.push_back(pass12);
 	test_str.push_back(pass13);
+	test_str.push_back(pass14);
 
 	test_str.push_back(fail1);
 	test_str.push_back(fail2);
@@ -56,11 +57,10 @@ int main(){
 	test_str.push_back(fail4);
 
 	cout << "-- Database Test Suite\n";
-	cout << "Enter database command or:\n;
+	cout << "Enter database command or: \n";
 	cout << "   <t> to run string tests\n";
-	cout << "   <q> to quit\n;
+	cout << "   <q> to quit\n";
 		
-
 	bool success = false;
 	string str;
     while(getline(cin, str)){
@@ -73,24 +73,23 @@ int main(){
 				if(p.match(test_str[i]))
 					success = true;
 				else
-					success = false
+					success = false;
+
+				if(success){
+					cout << "-------------------------\n";
+					cout << "Parsing SUCCEEDED\n";
+					cout << "-------------------------\n";
+				}
+				else{
+					cout << "-------------------------\n";
+					cout << "Parsing FAILED\n";
+					cout << "-------------------------\n";
+				}
 			}
 		}else if(p.match(str))
 			success = true;
         else
 			success = false;
-        
-
-		if(success){
-			cout << "-------------------------\n";
-            cout << "Parsing SUCCEEDED\n";
-            cout << "-------------------------\n";
-		}
-		else{
-			cout << "-------------------------\n";
-            cout << "Parsing FAILED\n";
-            cout << "-------------------------\n";
-		}
     }
 	return 0;
 }
