@@ -14,6 +14,7 @@ function<pusher>::type const push_arg = {{}};
 
 Parser::Parser(){
 	// Set up Regex Matches
+	condition  = +_w;
 	literals   = (as_xpr('"') >> *_s >> +alnum >> *_s >> '"' | +_d);
 
 	type       = (s1 = (icase("VARCHAR") >> '(' >> +_d >> ')'))[push_arg(ref(data2), s1)] | 
@@ -30,16 +31,17 @@ Parser::Parser(){
 	cmd_update = icase("UPDATE") >> +_s >> +_w >> +_s >> icase("SET") >> +_s >>
 		         +_w >> *_s >> '=' >> *_s >> +_w >>
 				 *(*_s >> ',' >> *_s >> +_w >> *_s >> '=' >> *_s >> +_w) >> +_s >> 
-		         icase("WHERE") >> +_s >> by_ref(condition) >> *_s >> ';';
+		         icase("WHERE") >> +_s >> condition >> *_s >> ';';
 
 	cmd_insert = icase("INSERT INTO") >> +_s >> +_w >> +_s >> icase("VALUES FROM") >> +_s >>
 		         '(' >> *_s >> literals >> *(*_s >> ',' >> *_s >> literals) >> ')' >> *_s >> ';';
 				 
 	cmd_delete = icase("DELETE FROM") >> +_s >> +_w >> +_s >> icase("WHERE") >>
-		         +_s >> by_ref(condition) >> *_s >> ';';
+		         +_s >> condition >> *_s >> ';';
 
 	command    = +(cmd_create | cmd_update | cmd_insert | cmd_delete);
-
+	
+	/* FIXME
 	identifier = +alpha >> *(alpha | _d);
 
 	relation_name = identifier;
@@ -76,8 +78,8 @@ Parser::Parser(){
 	expr = (atomic_expr | selection | projection | renaming | union_of | difference | product | natural_join);
 
 	query = (relation_name >> *_s >> "<-" >> *_s >> expr);
-
-	program = (command | query);
+	*/
+	program = (command); // | query);
 }
 
 Parser::~Parser(){
