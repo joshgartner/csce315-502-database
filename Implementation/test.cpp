@@ -20,7 +20,7 @@ string pass9  = "cats_or_dogs <- dogs + (select (kind == \"cat\") animals;";
 string pass10 = "CREATE TABLE species (kind VARCHAR(10)) PRIMARY KEY (kind);";
 string pass11 = "INSERT INTO species VALUES FROM RELATION project (kind) animals;";
 string pass12 = "a <- rename (aname, akind) (project (name, kind) animals;";
-string pass13 = "common_names <- project (name) (select (aname == name, akind != kind) (a * animals);";
+string pass13 = "common_names <- project (name) (select (aname == name || akind != kind) (a * animals);";
 string pass14 = "answer <- common_names;";
 
 string fail1 = "BAD input hahaha;";
@@ -28,12 +28,10 @@ string fail2 = "INSERTINTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
 string fail3 = "INSERT INTOanimals VALUES FROM (\"Joe\", \"cat\", 4);";
 string fail4 = "INSERT INTO animals VALUES FROM(\"Joe\", \"cat\", 4);";
 
-
-
 vector<string> test_str;
 
 int main(){
-	Parser p;
+	Database dbms;
 
 	// TEST: Create Test String vector:
 	test_str.push_back(pass1);
@@ -56,12 +54,12 @@ int main(){
 	test_str.push_back(fail3);
 	test_str.push_back(fail4);
 
-	cout << "-- Database Test Suite\n";
+	cout << "\n-- Database Test Suite\n";
 	cout << "Enter database command or: \n";
 	cout << "   <t> to run string tests\n";
 	cout << "   <q> to quit\n";
+	cout << "> ";
 		
-	bool success = false;
 	string str;
     while(getline(cin, str)){
         if(str.empty() || str[0] == 'q' || str[0] == 'Q')
@@ -69,27 +67,11 @@ int main(){
 
 		if(str[0] == 't'){
 			for(unsigned int i = 0; i < test_str.size(); i++){
-				cout << "Testing: " << test_str[i] << "\n";
-				if(p.match(test_str[i]))
-					success = true;
-				else
-					success = false;
-
-				if(success){
-					cout << "-------------------------\n";
-					cout << "Parsing SUCCEEDED\n";
-					cout << "-------------------------\n";
-				}
-				else{
-					cout << "-------------------------\n";
-					cout << "Parsing FAILED\n";
-					cout << "-------------------------\n";
-				}
+				cout << "\n\nTesting: " << test_str[i] << "\n";
+				dbms.execute(test_str[i]);
 			}
-		}else if(p.match(str))
-			success = true;
-        else
-			success = false;
+		}
+		cout << "\n> ";
     }
 	return 0;
 }
