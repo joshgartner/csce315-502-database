@@ -2,25 +2,21 @@
 
 /* FIXME: Constructor
 */
-Database::Database(){}
+Database::Database() : parser(new Parser()){
+	parser->set_database(this);
+}
 
 /* FIXME: Deconstructor
 */
-Database::~Database(){}
+Database::~Database(){
+	delete parser;
+}
 
 /* FIXME: Parses command query to create a new relation
 */
-Relation Database::execute(string command){
-	Relation relation;
-	return relation;
-}
-
-/* FIXME: Pulls relation "name", parses the query, and performs operations.
-*/
-Relation Database::execute(string name, string query){
-	Relation relation;
-	return relation;
-}       
+void Database::execute(string command){
+	parser->match(command);
+} 
 
 /* FIXME: Not sure what the return type of this should be  
 
@@ -34,8 +30,8 @@ void Database::add_relation(Relation relation){
 
 /* FIXME: Goes through relations vector and pulls out the one requested
 */
-Relation Database::get_relation(string name){
-	Relation r;
+Relation * Database::get_relation(string name){
+	Relation *r = new Relation();
 	return r;
 }
 
