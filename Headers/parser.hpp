@@ -3,6 +3,7 @@
 
 #include "relation.hpp"
 #include "database.hpp"
+#include "error.hpp"
 #include <boost/xpressive/xpressive.hpp>
 #include <boost/xpressive/regex_actions.hpp>
 #include <iostream>
@@ -25,25 +26,15 @@ class Parser{
 public:
 	Parser();
 
-	smatch what;  // Holds what matched
 	Database *dbms; // Handle to the database
 	sregex id, literals, op, type; // Regexes for terminals
 
-	// String Regular Expressions (sregex) for commands
-	sregex command, cmd_update, cmd_delete;
-
-	// Create the Grammar for for queries
-	sregex query, relation_name, expr, identifier, atomic_expr;
-	sregex selection, condition, conjunction, comparison;
-	sregex operand, projection, renaming, union_of, difference;
-	sregex product, natural_join, attr_name, attr_list;
-	sregex program;
-
-	bool match(string &input);  // FIXME - should return a relation probably
+	Relation * match(string &input); 
+	void condition(Relation *r, string input, vector<bool> &matches);
 	Relation * create_cmd(string &cmd);
-	//Relation * update_cmd(string &cmd);
 	Relation * insert_cmd(string &cmd);
-	//Relation * delete_cmd(string &cmd);
+	Relation * update_cmd(string &cmd);
+	Relation * delete_cmd(string &cmd);
 
 	void show_vector(vector<string> &v, string title);
 	void remove_quotes(vector<string> &v);

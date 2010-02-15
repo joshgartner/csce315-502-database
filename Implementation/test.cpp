@@ -22,6 +22,8 @@ string pass11 = "INSERT INTO species VALUES FROM RELATION project (kind) animals
 string pass12 = "a <- rename (aname, akind) (project (name, kind) animals;";
 string pass13 = "common_names <- project (name) (select (aname == name || akind != kind) (a * animals);";
 string pass14 = "answer <- common_names;";
+string pass15 = "UPDATE animals SET kind = \"fish\", age = 7 WHERE name == \"Joe\"";
+string pass16 = "DELETE FROM animals WHERE name == \"Joe\"";
 
 string fail1 = "BAD input hahaha;";
 string fail2 = "INSERTINTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
@@ -48,6 +50,8 @@ int main(){
 	test_str.push_back(pass12);
 	test_str.push_back(pass13);
 	test_str.push_back(pass14);
+	test_str.push_back(pass15);
+	test_str.push_back(pass16);
 
 	test_str.push_back(fail1);
 	test_str.push_back(fail2);

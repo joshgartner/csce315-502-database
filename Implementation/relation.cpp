@@ -32,10 +32,27 @@ void Relation::add_row(vector<string> tuple){
 void Relation::remove_row(int index){
 }
 
+/* FIXME: Return the size of the table.  Length of one of the vectors basically
+*/
+int Relation::size(){
+	return 10;
+}
+
 /* FIXME:
 */
 void Relation::display(){
 }        
+
+/* FIXME:
+*/
+int Relation::compare(string &attr, string &entry, string &op){
+	int index = 0;
+	// Find the index of the row that matches and return it
+	// Return 0, if nothing matches.
+	return index;
+}
+
+void Relation::update_attrs(vector<string> &attr, vector<string> &literals, int index){}
 
 /* FIXME: Input will look like "select (x1 == y1, x2 != y2) r"
    So use the vector indices to line up expressions, and pull attributes (column names)
@@ -43,51 +60,51 @@ void Relation::display(){
    and then for that whole vector, compare it to rhs[0] with the given operation.
    When the condition is true, take that row and add it to the relation you are going to return (named name).
 */
-Relation Relation::select(string name, Relation rela, vector<string> lhs, vector<string> rhs, vector<int> ops){
-	Relation relation;
-	return relation;
+Relation * Relation::select(string name, Relation rela, vector<string> lhs, vector<string> rhs, vector<int> ops){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME: Go through r and steal all the columns with the same names found in "columns"  add these to another relation 
    called "name" and return it.
 */
-Relation Relation::project(string name, Relation rela, vector<string> columns){
-	Relation relation;
-	return relation;
+Relation * Relation::project(string name, Relation rela, vector<string> columns){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME: Attr_list is a bunch of column names corresponding to r's columns.  Rename r's columns with the ones
    provided, and return the new relation named "name" with renamed columns.
 */
-Relation Relation::rename(string name, Relation rela, vector<string> attr_list){
-	Relation relation;
-	return relation;
+Relation * Relation::rename(string name, Relation rela, vector<string> attr_list){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME:
 */
-Relation Relation::union_of(string name, Relation r1, Relation r2){
-	Relation relation;
-	return relation;
+Relation * Relation::union_of(string name, Relation r1, Relation r2){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME:
 */
-Relation Relation::difference(string name, Relation r1, Relation r2){
-	Relation relation;
-	return relation;
+Relation * Relation::difference(string name, Relation r1, Relation r2){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME:
 */
-Relation Relation::x_product(string name, Relation r1, Relation r2){
-	Relation relation;
-	return relation;
+Relation * Relation::x_product(string name, Relation r1, Relation r2){
+	Relation *r = new Relation();
+	return r;
 }
 
 /* FIXME:
 */
-Relation Relation::natural_join(string name, Relation r1, Relation r2){
-	Relation relation;
-	return relation;
+Relation * Relation::natural_join(string name, Relation r1, Relation r2){
+	Relation *r = new Relation();
+	return r;
 }

@@ -1,13 +1,5 @@
 #include "parser.hpp"
 
-class Error{
-public:
-	string message;
-	Error(string msg){
-		message = msg;
-	}
-};
-
 // Semantic Action, pushes argument into a vector
 struct pusher{
     typedef void result_type; // Result type, needed for xpressive
@@ -24,33 +16,10 @@ Parser::Parser(){
 	// Set up Regex Matches
 	id       = (alpha >> *(alpha | _d));
 	literals = skip(_s)(('"' >> +alnum >> '"')| +_d);
-	op       = (as_xpr("==") | "!=" | '<' | '>' | "<=" | ">=");
+	op       = skip(_s)(as_xpr("==") | "!=" | '<' | '>' | "<=" | ">=");
 	type     = (icase("VARCHAR") >> '(' >> +_d >> ')') | icase("INTEGER");
 
 	/* FIXME - All of this will move
-	comparison = skip(_s)(operand >> op >> operand);
-
-	condition = comparison >> (*(as_xpr("&&") >> comparison) | *("||" >> comparison)) |
-		       (*(as_xpr("&&") >> '(' >> comparison >> (*("&&" >> comparison) | *("||" >> comparison)) >> ')')) |
-			   (*(as_xpr("||") >> '(' >> comparison >> (*("&&" >> comparison) | *("||" >> comparison)) >> ')'));
-
-	relation_name = (s1 = identifier)[ref(r_name) = s1];
-
-	attr_name     = (s1 = identifier)[vpush(ref(v_attr_names), s1)];
-
-	attr_list     = skip(_s)('(' >> attr_name >> *(',' >> attr_name) >> ')');
-
-	operand = attr_name | literals;
-
-	cmd_update = skip(_s)(icase("UPDATE") >> relation_name >> icase("SET") >> 
-		         attr_name >> '=' >> literals >> *(',' >> attr_name >> '=' >> literals) >> 
-		         icase("WHERE") >> condition >> ';');
-
-	
-				 
-	cmd_delete = skip(_s)(icase("DELETE FROM") >> relation_name >> icase("WHERE") >> condition >> ';');
-
-	command    = +(cmd_create | cmd_update | cmd_insert | cmd_delete);
 
 	atomic_expr = relation_name | ('(' >> by_ref(expr) >> ')');
 
@@ -76,7 +45,9 @@ Parser::Parser(){
 	*/
 }
 
-bool Parser::match(string &input){
+/* FIXME - need to add union, natural-join, product, and difference
+*/
+Relation * Parser::match(string &input){
 	int n = -1;
 	sregex query = skip(_s)(icase("create")[ref(n) = CREATE] >> *_
 	    | icase("update")[ref(n) = UPDATE] >> *_
@@ -87,27 +58,79 @@ bool Parser::match(string &input){
 		| icase("rename")[ref(n) = RENAME] >> *_);
 
 	regex_match(input, query);
-	try{
-		switch(n){
-			case CREATE:
-				create_cmd(input);
-				break;
-			case UPDATE:
-			case INSERT:
-				insert_cmd(input);
-				break;
-			case DELETE:
-			case SELECT:
-			case PROJECT:
-			case RENAME:
-			default:
-				throw Error(" **Parser Error: invalid input\n");
+	switch(n){
+		case CREATE:
+			return create_cmd(input);
+			break;
+		case UPDATE:
+			return update_cmd(input);
+			break;
+		case INSERT:
+			return insert_cmd(input);
+			break;
+		case DELETE:
+			return delete_cmd(input);
+			break;
+		case SELECT:
+		case PROJECT:
+		case RENAME:
+		default:
+			throw Error(" **Parser Error: invalid input\n");
+	}
+}
+
+// Make sure that the vector has been initialized to the size of relation before calling!
+void Parser::condition(Relation *r, string input, vector<bool> &matches){
+	string attr, entry, opr, more;
+	int index; // A row number that matches the condition
+	
+	sregex cond = 
+		skip(_s)((s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> (s3 = literals)[ref(entry) = s3] >> 
+		(s4 = *_)[ref(more) = s4]) | skip(_s)('(' >> (s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> 
+		(s3 = literals)[ref(entry) = s3] >> (s4 = *_)[ref(more) = s4]);
+	sregex conjunction =
+		skip(_s)("||" >> (s1 = *_)[ref(more) = s1]);
+	sregex comparison =
+		skip(_s)("&&" >> (s1 = *_)[ref(more) = s1]);
+	sregex parens =
+		skip(_s)(*(as_xpr(')')));
+
+	if(regex_match(input, cond)){
+		cout << "\nSuccessful condition match";
+		cout << "\nAttr : " << attr;
+		cout << "\nEntry: " << entry;
+		cout << "\nOp   : " << opr;
+		cout << "\nMore : " << more;
+		index = r->compare(attr, entry, opr);
+		if(index > 0){
+			matches[index] = true; // Add to rows matching the condition
 		}
-	}catch(Error e){
-		cout << e.message;
-		return false;
-	}	
-	return true;
+		if(more != ""){
+			cout << "\nSending next condition:";
+			condition(r, more, matches);
+		}
+	}
+	else if(regex_match(input, conjunction)){
+		condition(r, more, matches); // Continue to add to matches on an OR
+	}
+	else if(regex_match(input, comparison)){
+		vector<bool> temp = matches;
+		condition(r, more, matches);
+		vector<bool>::iterator it1;
+		vector<bool>::iterator it2;
+		for(it1 = temp.begin(); it1 < temp.end(); it1++){
+			for(it2 = matches.begin(); it2 < matches.end(); it2++){
+				if(*it1 != *it2){
+					*it2 = false; // Clear out the non-matching conditions
+				}
+			}
+		}
+	}
+	else if(!regex_match(input, parens)){
+		// There was something more than closing parenthesis left:
+		string msg = " **invalid condition at: " + input;
+		throw Error(msg);
+	}
 }
 
 Relation * Parser::create_cmd(string &cmd){
@@ -165,27 +188,85 @@ Relation * Parser::insert_cmd(string &cmd){
 	}
 }
 
-/*
+
 Relation * Parser::update_cmd(string &cmd){
+	string name, cond;
+	vector<string> v_attr, v_literals;
+
+	sregex cmd_update = 
+		skip(_s)(icase("UPDATE") >> (s1 = id)[ref(name) = s1] >> icase("SET") >> (s2 = id)[vpush(ref(v_attr), s2)] >> 
+		"=" >> (s3 = literals)[vpush(ref(v_literals), s3)] >> *(',' >> (s4 = id)[vpush(ref(v_attr), s4)] >> "=" >> 
+		(s5 = literals)[vpush(ref(v_literals), s5)]) >> icase("WHERE") >> (s6 = *_)[ref(cond) = s6]);
+
+	if(regex_match(cmd, cmd_update)){
+		Relation *r = dbms->get_relation(name);
+		int size = r->size();
+		vector<bool> matches(size, false);
+		condition(r, cond, matches);   // Matches now has index to row we want.
+		remove_quotes(v_literals);
+		int index = 0;
+		for(unsigned int i = 0; i < matches.size(); i++){
+			if(matches[i] == true){
+				index = i; // Only one row can match
+				cout << "Assigned index in update: " << index;
+				break;
+			}
+		}
+		r->update_attrs(v_attr, v_literals, index);
+		cout << "\nRelation Updated: " << name;
+		show_vector(v_attr, "Attributes");
+		show_vector(v_literals, "Literals");
+		cout << "\nCondition: " << cond << "\n";
+		return r;
+	}
+	else{
+		throw Error(" **Parser Error: invalid input\n");
+	}
 }
 
 
 
 Relation * Parser::delete_cmd(string &cmd){
+	string name, cond;
+
+	sregex cmd_delete = 
+		skip(_s)(icase("DELETE FROM") >> (s1 = id)[ref(name) = s1] >> icase("WHERE") >> 
+		(s2 = *_)[ref(cond) = s2]);
+
+	if(regex_match(cmd, cmd_delete)){
+		Relation *r = dbms->get_relation(name);
+		int size = r->size();
+		vector<bool> matches(size, false);
+		condition(r, cond, matches);   // Matches now has index to row we want.
+		int index = 0;
+		for(unsigned int i = 0; i < matches.size(); i++){
+			if(matches[i] == true){
+				index = i; // Only one row can match
+				cout << "Assigned index in update: " << index;
+				break;
+			}
+		}
+		cout << "\nDeleting from: " << name;
+		cout << "\nCondition    : " << cond;
+		r->remove_row(index);
+		return r;
+	}
+	else{
+		throw Error(" **Parser Error: invalid input\n");
+	}
 }
-*/
 
 
 void Parser::show_vector(vector<string> &v, string title){
 	vector<string>::iterator it;
 	cout << "\n" << title << " contains: ";
-	for(it = v.begin() ; it < v.end(); it++)
+	for(it = v.begin(); it < v.end(); it++)
 		cout << " " << *it;
 }
 
 void Parser::remove_quotes(vector<string> &v){
 	vector<string>::iterator it;
-	for(it = v.begin() ; it < v.end(); it++){
+	for(it = v.begin(); it < v.end(); it++){
 		it->erase(remove(it->begin(), it->end(), '\"'), it->end());
 	}
 }
