@@ -9,13 +9,20 @@ Database::Database() : parser(new Parser()){
 /* FIXME: Deconstructor
 */
 Database::~Database(){
+	clear_relations();
 	delete parser;
 }
 
 /* FIXME: Parses command query to create a new relation
 */
 void Database::execute(string command){
-	parser->match(command);
+	Relation *r = new Relation();
+	try{
+		r = parser->match(command);
+		add_relation(r);
+	}catch(Error e){
+		cout << e.message;
+	}
 } 
 
 /* FIXME: Not sure what the return type of this should be  
@@ -24,8 +31,11 @@ void Database::execute(string name, string query, back_inserter){
 }*/  
 
 /* FIXME: Adds to currently managed relations vector
+   Needs to first search and make sure it doesn't already exist.
+   If so, just overwrite it in the vector.
 */
-void Database::add_relation(Relation relation){
+void Database::add_relation(Relation *r){
+	relations.push_back(r);
 }
 
 /* FIXME: Goes through relations vector and pulls out the one requested
@@ -33,6 +43,16 @@ void Database::add_relation(Relation relation){
 Relation * Database::get_relation(string name){
 	Relation *r = new Relation();
 	return r;
+}
+
+/* clear_relations(): called by the destructor to clear out the relations vector
+*/
+void Database::clear_relations(){
+	vector<Relation *>::iterator it;
+	for(it = relations.begin() ; it < relations.end(); it++){
+		delete *it;
+	}
+	relations.clear();
 }
 
 /* FIXME: Writes given relation to a text file of the same name, (warn/overwrite if already exists?)
