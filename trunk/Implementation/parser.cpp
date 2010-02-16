@@ -12,6 +12,10 @@ struct pusher{
 
 function<pusher>::type const vpush = {{}};
 
+/* Constructor:
+	Initialize string regular expressions (sregex) commonly needed for
+	parsing operations.
+*/
 Parser::Parser(){
 	id         = (alpha >> *(alpha | _d));
 	literals   = skip(_s)(('"' >> +alnum >> '"')| +_d);
@@ -22,11 +26,15 @@ Parser::Parser(){
 
 	atomic_expr = skip(_s)('(' >> icase("select") >> *_
 		| '(' >> icase("project") >> *_
-		| '(' >> icase("rename") >> *_)
+		| '(' >> icase("rename") >> *_
 		| id;
 }
 
-/* FIXME
+/* match(string &input):
+	This is the entry point for the Parser module.  It establishes some match
+	criteria, searches for operations that need to be broken up like union, difference,
+	product, and natural_join, and splits around them if necessary.
+	Return: A pointer to the relation created.
 */
 Relation * Parser::match(string &input){
 	int n = -1;
@@ -74,7 +82,9 @@ Relation * Parser::match(string &input){
 	}
 }
 
-// Make sure that the vector has been initialized to the size of relation before calling!
+/* condition(Relation *r, string input, vector<bool> &matches):
+	FIXME
+*/
 void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	string attr, entry, opr, more;
 	int index; // A row number that matches the condition
@@ -128,6 +138,12 @@ void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	}
 }
 
+/* create_cmd(string &cmd):
+	Parses and tokenizes command expressions all at once.  If the input was good, it creates
+	the new relation with the provided data.  Otherwise, throws a parser error.
+	FIXME: Should somehow flag it to be persistent
+	Return:  Pointer to the new relation
+*/
 Relation * Parser::create_cmd(string &cmd){
 	string name;
 	vector<string> v_attr, v_types, v_keys;
@@ -154,9 +170,13 @@ Relation * Parser::create_cmd(string &cmd){
 	}
 }
 
+/* insert_cmd(string &cmd):
+	Parses and tokenizes insert commands.  On a match, pulls the the required relation from the database and
+	calls insert on it.  In the FROM RELATION case, it evaluates the expr, and calls the overloaded insert.
+	Returns: The relation created
+*/
 Relation * Parser::insert_cmd(string &cmd){
-	string name = "NULL";
-	string expr = "NULL";
+	string name, expr;
 	vector<string> v_tuple;
 
 	sregex cmd_insert = 
@@ -165,14 +185,19 @@ Relation * Parser::insert_cmd(string &cmd){
 		')' >> ';') | skip(_s)(icase("INSERT INTO") >> (s4 = id)[ref(name) = s4] >> icase("VALUES FROM RELATION") >>
 		(s5 = *_)[ref(expr) = s5]);
 
-	// FIXME - Handle "values from relation" case.
 	if(regex_match(cmd, cmd_insert)){
 		Relation *r = dbms->get_relation(name);
-		cout << "\nRelation Fetched:";
 		cout << "\nRelation Name : " << name;
-		cout << "\nFollow Expr is: " << expr;
-		remove_quotes(v_tuple);
-		show_vector(v_tuple, "Tuples");
+		if(expr.empty()){
+			remove_quotes(v_tuple);
+			show_vector(v_tuple, "Tuples");
+			r = dbms->insert(r, v_tuple);
+		}
+		else{
+			cout << "\nFollow Expr is: " << expr;
+			Relation *from_relation = match(expr);
+			r = dbms->insert(r, from_relation);
+		}
 		return r;
 	}
 	else{
@@ -180,7 +205,9 @@ Relation * Parser::insert_cmd(string &cmd){
 	}
 }
 
-
+/* update_cmd(string &cmd):
+	
+*/
 Relation * Parser::update_cmd(string &cmd){
 	string name, cond;
 	vector<string> v_attr, v_literals;
@@ -196,15 +223,12 @@ Relation * Parser::update_cmd(string &cmd){
 		vector<bool> matches(size, false);
 		condition(r, cond, matches);   // Matches now has index to row we want.
 		remove_quotes(v_literals);
-		int index = 0;
 		for(unsigned int i = 0; i < matches.size(); i++){
 			if(matches[i] == true){
-				index = i; // Only one row can match
+				r->update_attrs(v_attr, v_literals, i);
 				cout << "Assigned index in update: " << index;
-				break;
 			}
 		}
-		r->update_attrs(v_attr, v_literals, index);
 		cout << "\nRelation Updated: " << name;
 		show_vector(v_attr, "Attributes");
 		show_vector(v_literals, "Literals");
@@ -230,17 +254,14 @@ Relation * Parser::delete_cmd(string &cmd){
 		int size = r->size();
 		vector<bool> matches(size, false);
 		condition(r, cond, matches);   // Matches now has index to row we want.
-		int index = 0;
-		for(unsigned int i = 0; i < matches.size(); i++){
-			if(matches[i] == true){
-				index = i; // Only one row can match
-				cout << "Assigned index in update: " << index;
-				break;
-			}
-		}
 		cout << "\nDeleting from: " << name;
 		cout << "\nCondition    : " << cond;
-		r->remove_row(index);
+		for(unsigned int i = 0; i < matches.size(); i++){
+			if(matches[i] == true){
+				r->remove_row(i);
+				cout << "\nDeleted row: " << index;
+			}
+		}
 		return r;
 	}
 	else{
@@ -258,7 +279,6 @@ Relation * Parser::select_query(string &cmd){
 		skip(_s)((s1 = id)[ref(name) = name] >> "<-" >> icase("select") >> conditions >> 
 		(s2 = atomic_expr)[ref(more) = s2]);
 
-	// FIXME - Adapt to call dbms->select
 	if(regex_match(cmd, selection)){
 		cout << "\nRelation name  : " << name;
 		cout << "\nCondtions were : " << cond;

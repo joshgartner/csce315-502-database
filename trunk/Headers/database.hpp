@@ -22,11 +22,14 @@ public:
     
     //void execute(string name, string query, back_inserter);  // Not sure what the return type of this should be  
     
-    void add_relation(Relation *r);           // Adds to currently managed relations vector
-    Relation * get_relation(string name);     // Goes through relations vector and pulls out the one requested
-	void clear_relations();                   // Delete all the relations in the relation vector
-    bool save(Relation r);                    // Writes given relation to a text file of the same name, (warn/overwrite if already exists?)
-    bool load(string name);                   // Grabs relation from file, puts into relations vector, returns true if successful
+    void add_relation(Relation *r);       // Adds to currently managed relations vector
+    Relation * get_relation(string name); // Goes through relations vector and pulls out the one requested
+	void clear_relations();  // Delete all the relations in the relation vector
+    bool save(Relation r);   // Writes given relation to a text file of the same name, (warn/overwrite if already exists?)
+    bool load(string name);  // Grabs relation from file, puts into relations vector, returns true if successful
+
+	Relation * insert(Relation *r, vector<string> row);      // Add the row to the table
+	Relation * insert(Relation *r, Relation *from_relation); // Add all the rows of the given relation
 
 	 /* The queries should preserve the relation provided, so always create a new one and return that.
        All of these should throw an Error exception if vectors don't match up or something.
