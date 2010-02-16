@@ -83,13 +83,14 @@ Relation * Parser::match(string &input){
 }
 
 /* condition(Relation *r, string input, vector<bool> &matches):
-	FIXME
+	A condition match is x op y {*}.  Or the condition can start with an open parenthesis.
+	A conjunction is || ({*}), and a comparison is && ({*}).
 */
 void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	string attr, entry, opr, more;
 	int index; // A row number that matches the condition
 	
-	sregex cond = 
+	sregex cond =
 		skip(_s)((s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> (s3 = literals)[ref(entry) = s3] >> 
 		(s4 = *_)[ref(more) = s4]) | skip(_s)('(' >> (s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> 
 		(s3 = literals)[ref(entry) = s3] >> (s4 = *_)[ref(more) = s4]);
@@ -98,7 +99,7 @@ void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	sregex comparison =
 		skip(_s)(as_xpr("&&") >> (s1 = *_)[ref(more) = s1]);
 	sregex parens =
-		skip(_s)(*(as_xpr(')')));
+		skip(_s)(*(as_xpr(')')) | *(')') >> ';');
 
 	if(regex_match(input, cond)){
 		cout << "\nSuccessful condition match";
@@ -106,11 +107,8 @@ void Parser::condition(Relation *r, string input, vector<bool> &matches){
 		cout << "\nEntry: " << entry;
 		cout << "\nOp   : " << opr;
 		cout << "\nMore : " << more;
-		index = r->compare(attr, entry, opr);
-		if(index > 0){
-			matches[index] = true; // Add to rows matching the condition
-		}
-		if(more != ""){
+		r->compare(attr, entry, opr, matches);
+		if(!more.empty()){
 			cout << "\nSending next condition:";
 			condition(r, more, matches);
 		}

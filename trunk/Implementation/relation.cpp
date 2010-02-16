@@ -55,11 +55,7 @@ void Relation::display(){
 
 /* FIXME:
 */
-int Relation::compare(string &attr, string &entry, string &op){
-	int index = 0;
-	// Find the index of the row that matches and return it
-	// Return 0, if nothing matches.
-	return index;
+void Relation::compare(string &attr, string &entry, string &op, vector<bool> &matches){
 }
 
 /* FIXME:

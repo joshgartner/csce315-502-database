@@ -35,10 +35,11 @@ public:
     
     void display();                               // Show us the table!  For loops and couts.
 
-	int compare(string &attr, string &entry, string &op);
-		/* Returns all indices of where in the relation the expression matches, or 0 if no matches.
+	void compare(string &attr, string &entry, string &op, vector<bool> &matches);
+		/* Do the comparison in the relation, update matches to reflect true for any rows that the condition is true for.
 		   An expression is:  attr op entry.  So look in the attr column and compare all the values
-		   to "op entry", so like < 7 or something.  The return type should probably be a vector<int>.
+		   to "op entry", so like age < 7 would look in the age column, and set all the indexes in matches to true
+		   where the value was < 7.
         */
 
 	void update_attrs(vector<string> &attr, vector<string> &literals, int index);
