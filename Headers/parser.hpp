@@ -28,6 +28,7 @@ public:
 
 	Database *dbms; // Handle to the database
 	sregex id, literals, op, type; // Regexes for terminals
+	sregex query_op, atomic_expr;
 
 	Relation * match(string &input); 
 	void condition(Relation *r, string input, vector<bool> &matches);
@@ -36,6 +37,12 @@ public:
 	Relation * update_cmd(string &cmd);
 	Relation * delete_cmd(string &cmd);
 
+	Relation * select_query(string &cmd);
+	Relation * project_query(string &cmd);
+	Relation * rename_query(string &cmd);
+	
+	Relation * expr_query(string &name, Relation *r1, Relation *r2, string operation);
+	
 	void show_vector(vector<string> &v, string title);
 	void remove_quotes(vector<string> &v);
 	void set_database(Database *database);

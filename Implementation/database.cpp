@@ -39,6 +39,7 @@ void Database::add_relation(Relation *r){
 }
 
 /* FIXME: Goes through relations vector and pulls out the one requested
+   Should throw a "Relation not found error" if it doesn't exist.
 */
 Relation * Database::get_relation(string name){
 	Relation *r = new Relation();
@@ -66,4 +67,54 @@ bool Database::save(Relation relation){
 bool Database::load(string name){
 	return true;
 }
+
+/* FIXME: Input will look like "select (x1 == y1, x2 != y2) r"
+   So use the vector indices to line up expressions, and pull attributes (column names)
+   from the relation r.  You'll probably use a switch statement on ops.  So find lhs[0] in r, 
+   and then for that whole vector, compare it to rhs[0] with the given operation.
+   When the condition is true, take that row and add it to the relation you are going to return (named name).
+*/
+Relation * Database::select(string name, Relation *r, vector<string> lhs, vector<string> rhs, vector<int> ops){
+	return r;
+}
+
+/* FIXME: Go through r and steal all the columns with the same names found in "columns"  add these to another relation 
+   called "name" and return it.
+*/
+Relation * Database::project(string name, Relation *r, vector<string> columns){
+	return r;
+}
+
+/* FIXME: Attr_list is a bunch of column names corresponding to r's columns.  Rename r's columns with the ones
+   provided, and return the new relation named "name" with renamed columns.
+*/
+Relation * Database::rename(string name, Relation *r, vector<string> attr_list){
+	return r;
+}
+
+/* FIXME:
+*/
+Relation * Database::union_of(string name, Relation *r1, Relation *r2){
+	return r1;
+}
+
+/* FIXME:
+*/
+Relation * Database::difference(string name, Relation *r1, Relation *r2){
+	return r1;
+}
+
+/* FIXME:
+*/
+Relation * Database::x_product(string name, Relation *r1, Relation *r2){
+	return r1;
+}
+
+/* FIXME:
+*/
+Relation * Database::natural_join(string name, Relation *r1, Relation *r2){
+	return r1;
+}
+
+
 
