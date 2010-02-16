@@ -68,6 +68,16 @@ bool Database::load(string name){
 	return true;
 }
 
+// Add the row to the table, make sure the length is right!
+Relation * Database::insert(Relation *r, vector<string> row){
+	return r;
+}
+
+// Add all the rows to r from the given relation
+Relation * Database::insert(Relation *r, Relation *from_relation){
+	return r;
+}
+
 /* FIXME: Input will look like "select (x1 == y1, x2 != y2) r"
    So use the vector indices to line up expressions, and pull attributes (column names)
    from the relation r.  You'll probably use a switch statement on ops.  So find lhs[0] in r, 
