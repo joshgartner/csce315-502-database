@@ -17,7 +17,7 @@ function<pusher>::type const vpush = {{}};
 	parsing operations.
 */
 Parser::Parser(){
-	id         = (alpha >> *(alpha | _d));
+	id         = skip(_s)(alpha >> *(alpha | _d));
 	literals   = skip(_s)(('"' >> +alnum >> '"')| +_d);
 	op         = skip(_s)(as_xpr("==") | "!=" | '<' | '>' | "<=" | ">=");
 	type       = (icase("VARCHAR") >> '(' >> +_d >> ')') | icase("INTEGER");
@@ -27,7 +27,7 @@ Parser::Parser(){
 	atomic_expr = skip(_s)('(' >> icase("select") >> *_
 		| '(' >> icase("project") >> *_
 		| '(' >> icase("rename") >> *_
-		| id;
+		| id);
 }
 
 /* match(string &input):
@@ -88,7 +88,6 @@ Relation * Parser::match(string &input){
 */
 void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	string attr, entry, opr, more;
-	int index; // A row number that matches the condition
 	
 	sregex cond =
 		skip(_s)((s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> (s3 = literals)[ref(entry) = s3] >> 
@@ -99,7 +98,7 @@ void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	sregex comparison =
 		skip(_s)(as_xpr("&&") >> (s1 = *_)[ref(more) = s1]);
 	sregex parens =
-		skip(_s)(*(as_xpr(')')) | *(')') >> ';');
+		skip(_s)(*(as_xpr(')')) | *(as_xpr(')')) >> ';');
 
 	if(regex_match(input, cond)){
 		cout << "\nSuccessful condition match";
@@ -159,6 +158,10 @@ Relation * Parser::create_cmd(string &cmd){
 		icase("PRIMARY KEY") >> keys >> ';');
 
 	if(regex_match(cmd, cmd_create)){
+		cout << "Trying to make relation:" << name;
+		show_vector(v_attr, "Attributes:");
+		show_vector(v_types,"Types     :");
+		show_vector(v_keys, "Keys      :");
 		Relation *r = new Relation(name, v_attr, v_types, v_keys);
 		cout << "\nRelation <" << name << "> created."; // DEBUG only
 		return r;
@@ -224,7 +227,7 @@ Relation * Parser::update_cmd(string &cmd){
 		for(unsigned int i = 0; i < matches.size(); i++){
 			if(matches[i] == true){
 				r->update_attrs(v_attr, v_literals, i);
-				cout << "Assigned index in update: " << index;
+				cout << "Assigned index in update: " << i;
 			}
 		}
 		cout << "\nRelation Updated: " << name;
@@ -257,7 +260,7 @@ Relation * Parser::delete_cmd(string &cmd){
 		for(unsigned int i = 0; i < matches.size(); i++){
 			if(matches[i] == true){
 				r->remove_row(i);
-				cout << "\nDeleted row: " << index;
+				cout << "\nDeleted row: " << i;
 			}
 		}
 		return r;
@@ -289,7 +292,7 @@ Relation * Parser::select_query(string &cmd){
 		condition(from_relation, cond, matches);   // Matches now has indexes to rows we want.
 		for(unsigned int i = 0; i < matches.size(); i++){
 			if(matches[i] == true){
-				r->add_row(from_relation->get_row(i));
+				r->add_tuple(from_relation->get_row(i));
 			}
 		}
 		return r;
