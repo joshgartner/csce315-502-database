@@ -1,5 +1,7 @@
 #include "Table.h"
 #include <fstream>
+#include <iomanip>
+#include <iostream>
 
 using namespace std;
 
@@ -47,7 +49,7 @@ Table::Table(string str_name, vector<string> attributes, vector<string> types, v
 		string type_id = types[i].substr(0, 7);
 
 		//decide if this attribute is a primary key
-		bool b_is_primary_key = (index_of(primary_key_indices, i) == -1);
+		bool b_is_primary_key = (index_of(primary_key_indices, i) != -1);
 
 		Column new_column(attributes[i], type_id, b_is_primary_key);
 		list_columns.push_back(new_column);
@@ -127,15 +129,28 @@ void Table::add_column(Column new_column)
 {
 	columns.push_back(new_column);
 }
-/*
-void Table::AddColumn(string columnName)
-{
-}
 
-void Table::AddColumn(string columnName, vector<int> ints)
-{
-}
+void Table::display(){
+	cout << "Relation: " << name << endl;
 
-void Table::AddColumn(string columnName, vector<string> strings)
-{
-}*/
+	//first display attribute names, and if they are primary keys
+	for (unsigned int col = 0; col < columns.size(); col++){
+		string str_output = (columns[col].b_primary_key)? "*" : "";
+		str_output += columns[col].name;
+
+		cout << left << setw(15);
+		cout << str_output;
+	}
+
+	cout << endl;
+
+	//then display all of the data in the relation
+	for (int row = 0; row < columns[0].get_length(); row++){
+		for (unsigned int col = 0; col < columns.size(); col++){
+			cout << left << setw(15);
+			cout << columns[col].get_item(row);
+		}
+
+		cout << endl;
+	}
+}

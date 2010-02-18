@@ -18,13 +18,12 @@ enum ColumnType
 
 class Column
 {
-private:
+public:
 	string name;
 	ColumnType type;
 	vector<string> data;
 	bool b_primary_key;
 
-public:
 	//Column(string strName,ColumnType column_type, vector<string> strings);
 	Column(string str_name, string type_id, bool b_is_primary_key);
 	//Column(string strName, vector<int> ints);
