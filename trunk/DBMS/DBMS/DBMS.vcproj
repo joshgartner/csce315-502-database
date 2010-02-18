@@ -192,10 +192,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Item.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Table.h"
 				>
 			</File>

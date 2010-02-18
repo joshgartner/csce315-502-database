@@ -5,13 +5,16 @@
 
 class DBMS
 {
-	vector<Table> tables;
+	Table current_table;
 
+public:
 	//ctor
 	DBMS();
 
-	void AddTable(Table newTable);
+	void add_table(Table new_table);
 
+	void load_tables();
+	void load(string table_name);
 	//TODO: add more accessors
 
 };
