@@ -20,8 +20,8 @@ void Database::execute(string command){
 	try{
 		r = parser->match(command);
 		add_relation(r);
-	}catch(Error e){
-		cout << e.message;
+	}catch(exception& e){
+		cout << e.what() << "\n";
 	}
 } 
 
@@ -42,30 +42,76 @@ void Database::add_relation(Relation *r){
    Should throw a "Relation not found error" if it doesn't exist.
 */
 Relation * Database::get_relation(string name){
-	Relation *r = new Relation();
-	return r;
+	Relation *r;
+	vector<Relation *>::iterator it;
+	for(it = relations.begin(); it < relations.end(); it++){
+		r = *it;
+		if(r->name == name){
+			return r;
+		}
+	}
+	string msg = " **Relation " + name + " doesn't exist";
+	throw Error(msg);
 }
 
 /* clear_relations(): called by the destructor to clear out the relations vector
 */
 void Database::clear_relations(){
 	vector<Relation *>::iterator it;
-	for(it = relations.begin() ; it < relations.end(); it++){
+	for(it = relations.begin(); it < relations.end(); it++){
 		delete *it;
 	}
 	relations.clear();
 }
 
-/* FIXME: Writes given relation to a text file of the same name, (warn/overwrite if already exists?)
+/* FIXME: Writes given relation to a text file of the same name, overwrites it if already exists
 */
-bool Database::save(Relation relation){
-	return true;
+void Database::save(Relation * r){
+	fstream fs((r->name).c_str(), ios::out);
+
+	fs << (r->columns).size() << "\n";
+	fs << (r->columns[0]).get_length() << "\n";
+
+	for(unsigned int i = 0; i < (r->columns).size(); i++){
+		fs << (r->columns[i]).to_string() << "\n";
+	}
+
+	fs.close();
 }
 
-/* FIXME: Grabs relation from file, puts into relations vector, returns true if successful
+/* Grabs relation from file, puts into relations vector
 */
-bool Database::load(string name){
-	return true;
+void Database::load(string table_name){
+	fstream fs(table_name.c_str(), ios::in);
+	Relation * new_table = new Relation();
+	new_table->name = table_name;
+
+	int num_columns;
+	int num_tuples;
+	string str_type;     //VARCHAR or INTEGER
+	int is_primary_key;  //1 or 0
+	char str_name[256];  //the name of the attribute
+	char str_entry[256];
+
+	fs >> num_columns;
+	fs >> num_tuples;
+
+	for(int i = 0; i < num_columns; i++){
+		fs >> is_primary_key;
+		fs >> str_type;
+		fs.get();  //trash the next \n
+		fs.getline(str_name, 256);
+
+		Column new_column = Column((string)str_name, str_type, (is_primary_key == 1));
+
+		for(int k = 0; k < num_tuples; k++){
+			fs.getline(str_entry, 256);
+			new_column.add_item((string)str_entry);
+		}
+
+		new_table->add_column(new_column);
+	}
+	add_relation(new_table);
 }
 
 // Add the row to the table, make sure the length is right!

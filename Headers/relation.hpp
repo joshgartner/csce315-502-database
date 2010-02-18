@@ -2,9 +2,12 @@
 #define _relation_hpp_
 
 #include "error.hpp"
+#include "column.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -13,23 +16,23 @@ enum {EQ, NEQ, LT, GT, LTE, GTE};
 class Relation{
 public:
     Relation();  // Create empty relation (otherwise known as a table)
-    Relation(string name, vector<string> column_names, vector<string> types, vector<string> primary_keys);  // Create relation with given data
+    Relation(string str_name, vector<string> attributes, vector<string> types, vector<string> primary_keys);
     ~Relation(); // Deconstructor
     
-    string name;
+    string name;                  // Name of the relation
     vector<string> primary_keys;
     vector<string> types;
     
-    /* Not sure how you wanted to make the table, this is probably not the best way:  I dunno */
-    vector<vector<string>> table;
+    vector<Column> columns;
+	int index_of(vector<string> list, string item);
+	int index_of(vector<int> list, int item);
     
-    // These are all needed to make database queries easier (a tuple is just a fancy name for a row):
     vector<string> get_row(int index);            // Or maybe an iterator as argument
     vector<string> get_column(int index);
-    void add_column(vector<string> new_column);   // Push a vector onto the back of the table
+    void add_column(Column new_column);           // Push a vector onto the back of the table
 	void add_relation(Relation *r1, Relation *r2);// Add a relation to a relation, r1's name is the name of it
     void remove_column(int index);                // Remove the given column, might take iterator
-    void add_row(vector<string> tuple);           // tuple[0] gets pushed onto table[0]'s vector, tuple[1] onto table[1]'s, etc
+    void add_tuple(vector<string> tuple);         
     void remove_row(int index);                   // (or iterator), remove the same index from each column.
 	int size();                                   // Returns the # of rows in the table, length of vector basically
     
