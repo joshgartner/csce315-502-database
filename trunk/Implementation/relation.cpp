@@ -11,25 +11,28 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 	vector<int> primary_key_indices;
 	bool b_valid_data = true;
 
-	if (attributes.size() != types.size()){
+	if(attributes.size() != types.size()){
+		cout << "\nNumber of attributes must match types";
 		b_valid_data = false;
 	}
 
 	//if we got data, we must have at least one primary key
-	if ((attributes.size() > 0) && (primary_keys.size() == 0)){
+	if((attributes.size() > 0) && (primary_keys.size() == 0)){
+		cout << "\nMust have at least one attribute and primary key";
 		b_valid_data = false;
 	}
 
 	//make sure each primarykey is in attributes
-	for (unsigned int i = 0; i < primary_keys.size(); i++){
+	for(unsigned int i = 0; i < primary_keys.size(); i++){
 		int index = index_of(attributes, primary_keys[i]);
 
 		//if primary key is in attributes, remember index so we can store that in column data
-		if (index != -1){
+		if(index != -1){
 			primary_key_indices.push_back(index);
 		}
 		//if it is not, throw an error
 		else{
+			cout << "\nPrimary key must be an attribute";
 			b_valid_data = false;
 			break;
 		}
@@ -38,7 +41,7 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 	vector<Column> list_columns;
 
 	//make column from each attribute and add to columns
-	for (unsigned int i = 0; i < attributes.size(); i++){
+	for(unsigned int i = 0; i < attributes.size(); i++){
 		string type_id = types[i].substr(0, 7);
 
 		//decide if this attribute is a primary key
@@ -48,7 +51,7 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 		list_columns.push_back(new_column);
 	}
 
-	if (!b_valid_data){
+	if(!b_valid_data){
 		throw Error(" **Invalid data during table creation");
 	}
 	else{
@@ -62,19 +65,15 @@ Relation::~Relation(){}
 
 /* Finds item in list and returns the index
 */
-int Relation::index_of(vector<string> list, string item)
-{
+int Relation::index_of(vector<string> list, string item){
 	int index;
 
-	for(index = list.size() - 1; index > -1; index--){
-		cout << "\nAttr:" << list[index] << "item:" << item << endl;
-		if (list[index] == item){
-			cout << "\nFound match.";
-			break;
+	for(index = 0; index < (int) list.size(); index++){
+		if(list[index].compare(item) == 0){
+			return index;
 		}
 	}
-
-	return index;
+	return -1;
 }
 
 /* Finds item in list and returns the index
@@ -82,13 +81,12 @@ int Relation::index_of(vector<string> list, string item)
 int Relation::index_of(vector<int> list, int item){
 	int index;
 
-	for(index = list.size() - 1; index > -1; index--){
-		if (list[index] == item){
-			break;
+	for(index = 0; index < (int) list.size(); index++){
+		if(list[index] == item){
+			return index;
 		}
 	}
-
-	return index;
+	return -1;
 }
 
 vector<string> Relation::get_row(int index){

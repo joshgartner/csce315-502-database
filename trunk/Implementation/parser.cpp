@@ -17,17 +17,18 @@ function<pusher>::type const vpush = {{}};
 	parsing operations.
 */
 Parser::Parser(){
-	id         = skip(_s)(alpha >> *(alpha | _d));
+	id         = (alpha >> *(alpha | _d));
 	literals   = skip(_s)(('"' >> +alnum >> '"')| +_d);
 	op         = skip(_s)(as_xpr("==") | "!=" | '<' | '>' | "<=" | ">=");
 	type       = (icase("VARCHAR") >> '(' >> +_d >> ')') | icase("INTEGER");
 	
-	query_op   = (as_xpr('+') | as_xpr('-') | as_xpr('*') | icase("JOIN"));
+	query_op   = (as_xpr('+') | (~(boost::xpressive::set['<']) >> *_s >> as_xpr('-')) 
+		| as_xpr('*') | icase("JOIN"));
 
-	atomic_expr = skip(_s)('(' >> icase("select") >> *_
-		| '(' >> icase("project") >> *_
-		| '(' >> icase("rename") >> *_
-		| id);
+	atomic_expr = ('(' >> *_s >> icase("select") >> *_s >> *_
+		| '(' >> *_s >> icase("project") >> *_s >> *_
+		| '(' >> *_s >> icase("rename") >> *_s >> *_
+		| id >> *_s >> ';');
 }
 
 /* match(string &input):
@@ -41,15 +42,15 @@ Relation * Parser::match(string &input){
 	string name;
 	smatch what; // Contains what matched
 	sregex query = 
-		skip(_s)(icase("create")[ref(n) = CREATE] >> *_
-	    | icase("update")[ref(n) = UPDATE] >> *_
-		| icase("insert")[ref(n) = INSERT] >> *_
-		| icase("delete")[ref(n) = DELETE] >> *_
-		| id >> "<-" >> icase("select")[ref(n) = SELECT] >> *_
-		| id >> "<-" >> icase("project")[ref(n) = PROJECT] >> *_
-		| id >> "<-" >> icase("rename")[ref(n) = RENAME] >> *_
-		| (s1 = id)[ref(name) = s1] >> "<-" >> *_
-		| (s1 = id)[ref(name) = s1]);
+		( *_s >> icase("create")[ref(n) = CREATE] >> *_
+	    | *_s >> icase("update")[ref(n) = UPDATE] >> *_
+		| *_s >> icase("insert")[ref(n) = INSERT] >> *_
+		| *_s >> icase("delete")[ref(n) = DELETE] >> *_
+		| *_s >> id >> *_s >> "<-" >> *_s >> icase("select")[ref(n) = SELECT] >> *_
+		| *_s >> id >> *_s >> "<-" >> *_s >> icase("project")[ref(n) = PROJECT] >> *_
+		| *_s >> id >> *_s >> "<-" >> *_s >> icase("rename")[ref(n) = RENAME] >> *_
+		| *_s >> (s1 = id)[ref(name) = s1] >> *_s >> "<-" >> *_s >> *_
+		| *_s >> (s1 = id)[ref(name) = s1] >> *_s);
 
 	regex_match(input, query);
 
@@ -65,7 +66,7 @@ Relation * Parser::match(string &input){
 		Relation *r2 = match(right);
 		return expr_query(name, r1, r2, (string) what[0]);
 	}
-	else if(name != ""){
+	else if(!name.empty()){
 		return dbms->get_relation(name);
 	}
 
@@ -78,7 +79,7 @@ Relation * Parser::match(string &input){
 		case PROJECT:  return project_query(input);
 		case RENAME :  return rename_query(input);
 		default:
-			throw Error(" **Parser Error: invalid input\n");
+			throw Error(" **Parser Error: match failed\n");
 	}
 }
 
@@ -90,9 +91,9 @@ void Parser::condition(Relation *r, string input, vector<bool> &matches){
 	string attr, entry, opr, more;
 	
 	sregex cond =
-		skip(_s)((s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> (s3 = literals)[ref(entry) = s3] >> 
-		(s4 = *_)[ref(more) = s4]) | skip(_s)('(' >> (s1 = id)[ref(attr) = s1] >> (s2 = op)[ref(opr) = s2] >> 
-		(s3 = literals)[ref(entry) = s3] >> (s4 = *_)[ref(more) = s4]);
+		(*_s >> (s1 = id)[ref(attr) = s1] >> *_s >> (s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> 
+		*_s >> (s4 = *_)[ref(more) = s4]) | *_s >> ('(' >> *_s >> (s1 = id)[ref(attr) = s1] >> *_s >> 
+		(s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> *_s >> (s4 = *_)[ref(more) = s4]);
 	sregex conjunction =
 		skip(_s)(as_xpr("||") >> (s1 = *_)[ref(more) = s1]);
 	sregex comparison =
@@ -147,27 +148,29 @@ Relation * Parser::create_cmd(string &cmd){
 
 	// Establish criteria for a match, while simultaneously populating vectors with data
 	sregex keys = 
-		skip(_s)('(' >> (s1 = id)[vpush(ref(v_keys), s1)] >> *(',' >> (s2 = id)[vpush(ref(v_keys), s2)]) >> ')');
+		('(' >> *_s >> (s1 = id)[vpush(ref(v_keys), s1)] >> *_s >> 
+		*(',' >> *_s >> (s2 = id)[vpush(ref(v_keys), s2)]) >> *_s >> ')');
 
 	sregex typed_attr_list = 
-		skip(_s)('(' >> (s1 = id)[vpush(ref(v_attr), s1)] >> (s2 = type)[vpush(ref(v_types), s2)] >> 
-		*(',' >> (s3 = id)[vpush(ref(v_attr), s3)] >> (s4 = type)[vpush(ref(v_types), s4)]) >> ')');
+		('(' >> *_s >> (s1 = id)[vpush(ref(v_attr), s1)] >> *_s >> (s2 = type)[vpush(ref(v_types), s2)] >> *_s >>
+		*(',' >> *_s >> (s3 = id)[vpush(ref(v_attr), s3)] >> *_s >> (s4 = type)[vpush(ref(v_types), s4)]) >> 
+		*_s >> ')');
 
 	sregex cmd_create = 
-		skip(_s)(icase("CREATE TABLE") >> (s1 = id)[ref(name) = s1] >> typed_attr_list >>
-		icase("PRIMARY KEY") >> keys >> ';');
+		(icase("CREATE TABLE") >> *_s >> (s1 = id)[ref(name) = s1] >> *_s >> typed_attr_list >> *_s >>
+		icase("PRIMARY KEY") >> *_s >> keys >> *_s >> ';');
 
 	if(regex_match(cmd, cmd_create)){
 		cout << "Trying to make relation:" << name;
-		show_vector(v_attr, "Attributes:");
-		show_vector(v_types,"Types     :");
-		show_vector(v_keys, "Keys      :");
+		show_vector(v_attr, "Attributes");
+		show_vector(v_types,"Types     ");
+		show_vector(v_keys, "Keys      ");
 		Relation *r = new Relation(name, v_attr, v_types, v_keys);
 		cout << "\nRelation <" << name << "> created."; // DEBUG only
 		return r;
 	}
 	else{
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: create command\n");
 	}
 }
 
@@ -181,28 +184,28 @@ Relation * Parser::insert_cmd(string &cmd){
 	vector<string> v_tuple;
 
 	sregex cmd_insert = 
-		skip(_s)(icase("INSERT INTO") >> (s1 = id)[ref(name) = s1] >> icase("VALUES FROM") >>
-		'(' >> (s2 = literals)[vpush(ref(v_tuple), s2)] >> *(',' >> (s3 = literals)[vpush(ref(v_tuple), s3)]) >> 
-		')' >> ';') | skip(_s)(icase("INSERT INTO") >> (s4 = id)[ref(name) = s4] >> icase("VALUES FROM RELATION") >>
-		(s5 = *_)[ref(expr) = s5]);
+		(icase("INSERT INTO") >> *_s >> (s1 = id)[ref(name) = s1] >> *_s >> icase("VALUES FROM") >> *_s >>
+		'(' >> *_s >> (s2 = literals)[vpush(ref(v_tuple), s2)] >> *_s >> *(',' >> *_s >> 
+		(s3 = literals)[vpush(ref(v_tuple), s3)]) >> *_s >> ')' >> *_s >> ';') | (icase("INSERT INTO") >> *_s >> 
+		(s4 = id)[ref(name) = s4] >> *_s >> icase("VALUES FROM RELATION") >> *_s >> (s5 = *_)[ref(expr) = s5]);
 
 	if(regex_match(cmd, cmd_insert)){
 		Relation *r = dbms->get_relation(name);
-		cout << "\nRelation Name : " << name;
+		cout << "\nRelation Name:" << name;
 		if(expr.empty()){
 			remove_quotes(v_tuple);
 			show_vector(v_tuple, "Tuples");
 			r = dbms->insert(r, v_tuple);
 		}
 		else{
-			cout << "\nFollow Expr is: " << expr;
+			cout << "\nFollow Expr is:" << expr;
 			Relation *from_relation = match(expr);
 			r = dbms->insert(r, from_relation);
 		}
 		return r;
 	}
 	else{
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: insert command\n");
 	}
 }
 
@@ -237,7 +240,7 @@ Relation * Parser::update_cmd(string &cmd){
 		return r;
 	}
 	else{
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: update command\n");
 	}
 }
 
@@ -266,21 +269,21 @@ Relation * Parser::delete_cmd(string &cmd){
 		return r;
 	}
 	else{
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: delete command\n");
 	}
 }
 
 
 Relation * Parser::select_query(string &cmd){
 	string name, cond, more;
-	sregex conditions = 
-		skip(_s)((s1 = before(atomic_expr))[ref(cond) = s1]);
+	smatch what;
+	sregex conditions = (s1 = before(atomic_expr))[ref(cond) = s1];
 
 	sregex selection = 
-		skip(_s)((s1 = id)[ref(name) = name] >> "<-" >> icase("select") >> conditions >> 
-		(s2 = atomic_expr)[ref(more) = s2]);
+		(*_s >> (s1 = id)[ref(name) = name] >> *_s >> "<-" >> *_s >> icase("select") >> *_s >> conditions >> 
+		 *_s >> (s2 = atomic_expr)[ref(more) = s2]);
 
-	if(regex_match(cmd, selection)){
+	if(regex_match(cmd, what, selection)){
 		cout << "\nRelation name  : " << name;
 		cout << "\nCondtions were : " << cond;
 		cout << "\nFrom expression: " << more;
@@ -297,8 +300,10 @@ Relation * Parser::select_query(string &cmd){
 		}
 		return r;
 	}
-	else
-		throw Error(" **Parser Error: invalid input\n");
+	else{
+		cout << what[0];
+		throw Error(" **Parser Error: select_query\n");
+	}
 }
 
 Relation * Parser::project_query(string &cmd){
@@ -321,7 +326,7 @@ Relation * Parser::project_query(string &cmd){
 		return r;
 	}
 	else
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: project_query\n");
 }
 
 Relation * Parser::rename_query(string &cmd){
@@ -344,7 +349,7 @@ Relation * Parser::rename_query(string &cmd){
 		return r;
 	}
 	else
-		throw Error(" **Parser Error: invalid input\n");
+		throw Error(" **Parser Error: rename_query\n");
 }
 
 
@@ -356,7 +361,7 @@ Relation * Parser::expr_query(string &name, Relation *r1, Relation *r2, string o
 		case 'J':
 		case 'j':  return dbms->natural_join(name, r1, r2);
 		default:
-			throw Error(" **Parser Error: invalid input\n");
+			throw Error(" **Parser Error: expr_query\n");
 	}
 }
 
