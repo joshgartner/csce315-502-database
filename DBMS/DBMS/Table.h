@@ -9,18 +9,25 @@ using namespace std;
 
 class Table
 {
-private:
+public:
+
 	string name;
 	vector<Column> columns;
 
-public:
-	Table(string strName);
-	Table(string strName, map<string, ColumnType> attributeList);
-	Table(string strName, vector<Column> columns);
+	Table(){}//default ctor
+	Table(string str_name, vector<string> attributes, vector<string> types, vector<string> primary_keys);
 
-	void AddColumn(Column newColumn);
-	//TODO: finish accessor functions
-	// and add implementation
+	int index_of(vector<string> list, string item);
+	int index_of(vector<int> list, int item);
+
+	void add_tuple(vector<string> tuple);
+
+	void save();
+
+	void add_column(Column new_column);/*
+	void AddColumn(string columnName);
+	void AddColumn(string columnName, vector<int> ints);
+	void AddColumn(string columnName, vector<string> strings);*/
 };
 
 #endif

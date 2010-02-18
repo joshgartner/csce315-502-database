@@ -1,45 +1,45 @@
 #include "Column.h"
 
-Column::Column(string strName, vector<string> strings)
+Column::Column(string str_name, string type_id, bool b_is_primary_key)
 {
-	name = strName;
-	type = StringType;
+	name = str_name;
 
-	for (unsigned int i = 0; i < strings.size(); i++)
+	if (type_id.compare(VARCHAR_ID) == 0)
 	{
-		Item tempItem;
-		tempItem.strItem = strings[i];
-
-		data.push_back(tempItem);
+		type = string_type;
 	}
-}
-
-Column::Column(string strName, vector<int> ints)
-{
-	name = strName;
-	type = IntType;
-
-	for (unsigned int i = 0; i < ints.size(); i++)
+	else if(type_id.compare(INTEGER_ID) == 0)
 	{
-		Item tempItem;
-		tempItem.intItem = ints[i];
-
-		data.push_back(tempItem);
+		type = int_type;
 	}
+	else
+	{
+		throw "ERROR";//TODO: change error handling
+	}
+
+	b_primary_key = b_is_primary_key;
 }
 
-Column::Column(string strName, ColumnType columnType)
+string Column::to_string()
 {
-	name = strName;
-	type = columnType;
+	string str_column = (b_primary_key)? "1\n" : "0\n";
+	str_column += (type == int_type)? INTEGER_ID : VARCHAR_ID;
+	str_column += "\n" + name;
+
+	for (unsigned int i = 0; i < data.size(); i++)
+	{
+		str_column += "\n" + data[i];
+	}
+
+	return str_column;
 }
 
-void Column::AddItem(Item item)
+void Column::add_item(string item)
 {
 	data.push_back(item);
 }
 
-void Column::AddItems(vector<Item> items)
+void Column::add_items(vector<string> items)
 {
 	for(unsigned int i = 0; i < items.size(); i++)
 	{
@@ -47,24 +47,24 @@ void Column::AddItems(vector<Item> items)
 	}
 }
 
-Item Column::GetItem(int index)
+string Column::get_item(int index)
 {
 	return data[index];
 }
 
-vector<Item> Column::GetItems()
+vector<string> Column::get_items()
 {
 	return data;
 }
 
-vector<Item> Column::GetItems(int start, int end)
+vector<string> Column::get_items(int start, int end)
 {
-	vector<Item> returnItems;
+	vector<string> return_items;
 
 	for (int i = start; i < end; i++)
 	{
-		returnItems.push_back(data[i]);
+		return_items.push_back(data[i]);
 	}
 
-	return returnItems;
+	return return_items;
 }
