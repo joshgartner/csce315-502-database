@@ -6,6 +6,8 @@
 
 #include "DBMS.h"
 
+using namespace std;
+
 DBMS::DBMS()
 {
 	//TODO: add ctor
@@ -59,3 +61,4 @@ void DBMS::load(string table_name)
 
 	current_table = new_table;
 }
+

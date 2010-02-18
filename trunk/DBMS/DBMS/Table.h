@@ -24,10 +24,8 @@ public:
 
 	void save();
 
-	void add_column(Column new_column);/*
-	void AddColumn(string columnName);
-	void AddColumn(string columnName, vector<int> ints);
-	void AddColumn(string columnName, vector<string> strings);*/
+	void add_column(Column new_column);
+	void display();
 };
 
 #endif
