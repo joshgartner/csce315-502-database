@@ -31,7 +31,7 @@ public:
 	sregex query_op, atomic_expr;
 
 	Relation * match(string &input); 
-	void condition(Relation *r, string input, vector<bool> &matches);
+	vector<bool> condition(Relation *r, string input);
 	Relation * create_cmd(string &cmd);
 	Relation * insert_cmd(string &cmd);
 	Relation * update_cmd(string &cmd);
@@ -44,7 +44,9 @@ public:
 	Relation * expr_query(string &name, Relation *r1, Relation *r2, string operation);
 	
 	void show_vector(vector<string> &v, string title);
+	void remove_quotes(string &s);
 	void remove_quotes(vector<string> &v);
+	void remove_semicolons(string &s);
 	void set_database(Database *database);
 };
 

@@ -17,9 +17,11 @@ Database::~Database(){
 */
 void Database::execute(string command){
 	Relation *r = new Relation();
+	parser->remove_semicolons(command);
 	try{
 		r = parser->match(command);
 		add_relation(r);
+		r->display();
 	}catch(exception& e){
 		cout << e.what() << "\n";
 	}
@@ -35,6 +37,13 @@ void Database::execute(string name, string query, back_inserter){
    If so, just overwrite it in the vector.
 */
 void Database::add_relation(Relation *r){
+	vector<Relation *>::iterator it;
+	for(it = relations.begin(); it < relations.end(); it++){
+		if(r->name == (*it)->name){
+			*it = r;
+			return;
+		}
+	}
 	relations.push_back(r);
 }
 
@@ -50,7 +59,7 @@ Relation * Database::get_relation(string name){
 			return r;
 		}
 	}
-	string msg = " **Relation " + name + " doesn't exist";
+	string msg = "\n **Relation " + name + " doesn't exist";
 	throw Error(msg);
 }
 
@@ -112,11 +121,6 @@ void Database::load(string table_name){
 		new_table->add_column(new_column);
 	}
 	add_relation(new_table);
-}
-
-// Add the row to the table, make sure the length is right!
-Relation * Database::insert(Relation *r, vector<string> row){
-	return r;
 }
 
 // Add all the rows to r from the given relation
