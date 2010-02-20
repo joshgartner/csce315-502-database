@@ -89,14 +89,18 @@ int Relation::index_of(vector<int> list, int item){
 	return -1;
 }
 
-vector<string> Relation::get_row(int index){
-	vector<string> dummy(1);
-	return dummy;
+vector<string> Relation::get_tuple(int index){
+	vector<string> tuple;
+	vector<string> col;
+	for(int i = 0; i < (int) columns.size(); i++){
+		col = columns[i].get_items();
+		tuple.push_back(col[index]);
+	}
+	return tuple;
 }
 
 vector<string> Relation::get_column(int index){
-	vector<string> dummy(1);
-	return dummy;
+	return columns[index].get_items();
 }
 
 /* Add a column to the table
@@ -113,8 +117,10 @@ void Relation::remove_column(int index){
 /* Add a row to the table
 */
 void Relation::add_tuple(vector<string> tuple){
-	if (tuple.size() != columns.size()){
-		throw Error(" **Row sizes must match");
+	if(tuple.size() != columns.size()){
+		cout << "Column Size: " << columns.size();
+		cout << "Tuples Size: " << tuple.size();
+		//throw Error("\n **Row sizes must match");
 	}
 
 	for(unsigned int i = 0; i < tuple.size(); i++){
@@ -125,6 +131,17 @@ void Relation::add_tuple(vector<string> tuple){
 /* FIXME: (arg could be iterator), remove the same index from each column.
 */
 void Relation::remove_row(int index){
+}
+
+/* copy_attrs(Relation *r)
+	Takes all the columns from this relation and copies them to r's.
+	The columns are then cleared in the new relation.  Useful for queries.
+*/
+void Relation::copy_attrs(Relation *r){
+	r->columns = columns;
+	for(int i = 0; i < (int) columns.size(); i++){
+		(r->columns[i]).remove_items();
+	}
 }
 
 /* size():
@@ -138,7 +155,7 @@ int Relation::size(){
 	Prints out the relation table to the screen
 */
 void Relation::display(){
-	cout << "Relation: " << name << endl;
+	cout << "\n\nRelation: " << name << endl;
 
 	//first display attribute names, and if they are primary keys
 	for(unsigned int col = 0; col < columns.size(); col++){
@@ -160,9 +177,91 @@ void Relation::display(){
 	}
 }        
 
+/* str_compare(string left, string right):
+	This function is meant to compare strings that are actually
+	integers.
+	Returns: 0 if equal, 1 if less than, -1 if greater than.
+*/
+int Relation::str_compare(string left, string right){
+	int i, j;
+	istringstream lss(left);
+	istringstream rss(right);
+	lss >> i;
+	rss >> j;
+	if(i == j){
+		return 0;
+	}
+	else if(i < j){
+		return 1;
+	}
+	else{   // i > j
+		return -1;
+	}
+}
 /* FIXME:
 */
-void Relation::compare(string &attr, string &entry, string &op, vector<bool> &matches){
+vector<bool> Relation::compare(string &attr, string &value, string &op){
+	cout << "\nComparing " << attr << " " << op << " " << value;
+	cout << "\nWhole relation:"; this->display();
+	
+	vector<bool> indexes(this->size(), false);
+	vector<string> data;
+	for(int i = 0; i < (int) columns.size(); i++){ // Find the right column
+		if(columns[i].get_name() == attr){
+			cout << "\nFound attr: " << attr;
+			data = columns[i].get_items();
+			break;
+		}
+	}
+	// Perform the appropriate comparison, and update match vector
+	if(op == "=="){
+		for(int i = 0; i < (int) data.size(); i++){
+			cout << "\nDoes " << data[i] << "==" << value << "?";
+			if(data[i] == value){
+				indexes[i] = true;
+				cout << "\nData matched: " << data[i] << " and " << value;
+			}
+		}
+	}
+	else if(op == "!="){
+		for(int i = 0; i < (int) data.size(); i++){
+			if(data[i] != value){
+				indexes[i] = true;
+			}
+		}
+	}
+	else if(op == "<"){
+		for(int i = 0; i < (int) data.size(); i++){
+		cout << "\nIs " << data[i] << "<" << value << "?";
+			if(str_compare(data[i], value) == 1){
+				indexes[i] = true;
+				cout << "\nData matched: " << data[i] << " and " << value;
+			}
+		}
+	}
+	else if(op == ">"){
+		for(int i = 0; i < (int) data.size(); i++){
+			if(str_compare(data[i], value) == -1){
+				indexes[i] = true;
+			}
+		}
+	}
+	else if(op == "<="){
+		for(int i = 0; i < (int) data.size(); i++){
+			if(str_compare(data[i], value) >= 0){
+				indexes[i] = true;
+				cout << "\nData matched: " << data[i] << " and " << value;
+			}
+		}
+	}
+	else if(op == ">="){
+		for(int i = 0; i < (int) data.size(); i++){
+			if(str_compare(data[i], value) <= 0){
+				indexes[i] = true;
+			}
+		}
+	}
+	return indexes;
 }
 
 /* FIXME:

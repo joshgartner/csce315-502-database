@@ -28,7 +28,6 @@ public:
     void save(Relation * r);   // Writes given relation to a text file of the same name
     void load(string name);  // Grabs relation from file, puts into relations vector
 
-	Relation * insert(Relation *r, vector<string> row);      // Add the row to the table
 	Relation * insert(Relation *r, Relation *from_relation); // Add all the rows of the given relation
 
 	 /* The queries should preserve the relation provided, so always create a new one and return that.

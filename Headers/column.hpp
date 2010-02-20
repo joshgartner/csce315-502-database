@@ -39,6 +39,9 @@ public:
 	string get_item(int index);
 	vector<string> get_items();
 	vector<string> get_items(int start, int end);
+
+	void remove_item(int index);
+	void remove_items();
 };
 
 #endif

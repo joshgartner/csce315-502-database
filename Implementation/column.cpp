@@ -59,3 +59,11 @@ vector<string> Column::get_items(int start, int end){
 
 	return return_items;
 }
+
+void Column::remove_item(int index){
+	data.erase(data.begin() + index);
+}
+
+void Column::remove_items(){
+	data.clear();
+}

@@ -15,18 +15,19 @@ string test4  = "INSERT INTO animals VALUES FROM (\"Snoopy\", \"dog\", 3);";
 string test5  = "INSERT INTO animals VALUES FROM (\"Tweety\", \"bird\", 1);";
 string test6  = "INSERT INTO animals VALUES FROM (\"Joe\", \"bird\", 2);";
 string test7  = "dogs <- select (kind == \"dog\") animals;";
-string test8  = "old_dogs <- select (age > 10) dogs;";
-string test9  = "cats_or_dogs <- dogs + (select (kind == \"cat\") animals;";
-string test10 = "CREATE TABLE species (kind VARCHAR(10)) PRIMARY KEY (kind);";
-string test11 = "INSERT INTO species VALUES FROM RELATION project (kind) animals;";
-string test12 = "a <- rename (aname, akind) (project (name, kind) animals;";
-string test13 = "common_names <- project (name) (select (aname == name || akind != kind) (a * animals);";
-string test14 = "answer <- common_names;";
-string test15 = "UPDATE animals SET kind = \"fish\", age = 7 WHERE name == \"Joe\"";
-string test16 = "DELETE FROM animals WHERE name == \"Joe\"";
-string test17 = "blah blah blah + hey hey hey";
-string test18 = "relation1 * relation2";
-string test19 = "relation3 JOIN relation4";
+string test8  = "dogs <- select (kind == \"dog\" && (name == \"Spot\")) animals;";
+string test9  = "old_dogs <- select (years < 10) animals;";
+string test10  = "cats_or_dogs <- dogs + (select (kind == \"cat\") animals;";
+string test11 = "CREATE TABLE species (kind VARCHAR(10)) PRIMARY KEY (kind);";
+string test12 = "INSERT INTO species VALUES FROM RELATION project (kind) animals;";
+string test13 = "a <- rename (aname, akind) (project (name, kind) animals;";
+string test14 = "common_names <- project (name) (select (aname == name || akind != kind) (a * animals);";
+string test15 = "answer <- common_names;";
+string test16 = "UPDATE animals SET kind = \"fish\", age = 7 WHERE name == \"Joe\"";
+string test17 = "DELETE FROM animals WHERE name == \"Joe\"";
+string test18 = "blah blah blah + hey hey hey";
+string test19 = "relation1 * relation2";
+string test20 = "relation3 JOIN relation4";
 
 string fail1 = "BAD input hahaha;";
 string fail2 = "INSERTINTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
@@ -49,6 +50,7 @@ int main(){
 	test_str.push_back(test8);
 	test_str.push_back(test9);
 	test_str.push_back(test10);
+	/*
 	test_str.push_back(test11);
 	test_str.push_back(test12);
 	test_str.push_back(test13);
@@ -58,11 +60,12 @@ int main(){
 	test_str.push_back(test17);
 	test_str.push_back(test18);
 	test_str.push_back(test19);
+	test_str.push_back(test20); 
 
 	test_str.push_back(fail1);
 	test_str.push_back(fail2);
 	test_str.push_back(fail3);
-	test_str.push_back(fail4);
+	test_str.push_back(fail4); */
 
 	cout << "\n-- Database Test Suite\n";
 	cout << "Enter database command or: \n";

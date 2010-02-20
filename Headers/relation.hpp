@@ -3,6 +3,7 @@
 
 #include "error.hpp"
 #include "column.hpp"
+#include <sstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,18 +28,20 @@ public:
 	int index_of(vector<string> list, string item);
 	int index_of(vector<int> list, int item);
     
-    vector<string> get_row(int index);            // Or maybe an iterator as argument
+    vector<string> get_tuple(int index);            
     vector<string> get_column(int index);
     void add_column(Column new_column);           // Push a vector onto the back of the table
 	void add_relation(Relation *r1, Relation *r2);// Add a relation to a relation, r1's name is the name of it
     void remove_column(int index);                // Remove the given column, might take iterator
     void add_tuple(vector<string> tuple);         
     void remove_row(int index);                   // (or iterator), remove the same index from each column.
+	void copy_attrs(Relation *r);                 // Copy this relation's columns to r's
 	int size();                                   // Returns the # of rows in the table, length of vector basically
     
     void display();                               // Show us the table!  For loops and couts.
 
-	void compare(string &attr, string &entry, string &op, vector<bool> &matches);
+	int str_compare(string left, string right);
+	vector<bool> compare(string &attr, string &value, string &op);
 		/* Do the comparison in the relation, update matches to reflect true for any rows that the condition is true for.
 		   An expression is:  attr op entry.  So look in the attr column and compare all the values
 		   to "op entry", so like age < 7 would look in the age column, and set all the indexes in matches to true
