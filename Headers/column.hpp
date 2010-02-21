@@ -28,6 +28,7 @@ public:
 	//void AddItem(Item item);
 	void add_items(vector<string> items);
 	void add_item(string item);
+	void set_item(int index, string item);
 	string to_string();
 
 	// Accessors

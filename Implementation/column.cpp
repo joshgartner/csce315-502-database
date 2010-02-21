@@ -46,6 +46,11 @@ string Column::get_item(int index){
 	return data[index];
 }
 
+//sets the value at index to item
+void Column::set_item(int index, string item){
+	data[index] = item;
+}
+
 vector<string> Column::get_items(){
 	return data;
 }
