@@ -45,7 +45,7 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 		string type_id = types[i].substr(0, 7);
 
 		//decide if this attribute is a primary key
-		bool b_is_primary_key = (index_of(primary_key_indices, i) == -1);
+		bool b_is_primary_key = (index_of(primary_key_indices, i) != -1);
 
 		Column new_column(attributes[i], type_id, b_is_primary_key);
 		list_columns.push_back(new_column);
@@ -89,6 +89,22 @@ int Relation::index_of(vector<int> list, int item){
 	return -1;
 }
 
+/* Finds the Column in list with name item
+*/
+int Relation::index_of(vector<Column> list, string item){
+	int index;
+
+	for (index = 0; index < (int) list.size(); index++){
+		if(list[index].get_name() == item){
+			return index;
+		}
+	}
+	return -1;
+}
+
+/* get_tuple(int index):
+	returns the tuple(as a vector<string>) at row index in Relation
+*/
 vector<string> Relation::get_tuple(int index){
 	vector<string> tuple;
 	vector<string> col;
@@ -99,6 +115,9 @@ vector<string> Relation::get_tuple(int index){
 	return tuple;
 }
 
+/* get_column(int index):
+	returns the data in Column at index as a vector<string>
+*/
 vector<string> Relation::get_column(int index){
 	return columns[index].get_items();
 }
@@ -109,9 +128,10 @@ void Relation::add_column(Column new_column){
 	columns.push_back(new_column);
 }
 
-/* FIXME: Remove the given column, might take iterator
+/* Remove the given column, might take iterator
 */
 void Relation::remove_column(int index){
+	columns.erase(columns.begin() + index);
 }
 
 /* Add a row to the table
@@ -128,9 +148,13 @@ void Relation::add_tuple(vector<string> tuple){
 	}
 }
 
-/* FIXME: (arg could be iterator), remove the same index from each column.
+/* remove_tuple(int index):
+	removes the tuple(row) at index of the Relation
 */
-void Relation::remove_row(int index){
+void Relation::remove_tuple(int index){
+	for (int i = 0; i < (int) columns.size(); i++){
+		columns[i].remove_item(index);
+	}
 }
 
 /* copy_attrs(Relation *r)
@@ -198,7 +222,7 @@ int Relation::str_compare(string left, string right){
 		return -1;
 	}
 }
-/* FIXME:
+/* 
 */
 vector<bool> Relation::compare(string &attr, string &value, string &op){
 	cout << "\nComparing " << attr << " " << op << " " << value;
@@ -264,7 +288,16 @@ vector<bool> Relation::compare(string &attr, string &value, string &op){
 	return indexes;
 }
 
-/* FIXME:
+/* update_attrs(vector<string> &attr, vector<string> &literals, int index):
+	updates the attributes in attr at tuple(row) index in the Relation. The
+	values are set to corresponding values in literals
 */
 void Relation::update_attrs(vector<string> &attr, vector<string> &literals, int index){
+
+	for (unsigned int i = 0; i < attr.size(); i++){
+		//get the column corresponding to attr
+		int n_col = index_of(columns, attr[i]);
+		//set the value at index of the column to new value
+		columns[n_col].set_item(index, literals[i]);
+	}
 }

@@ -27,14 +27,15 @@ public:
     vector<Column> columns;
 	int index_of(vector<string> list, string item);
 	int index_of(vector<int> list, int item);
+	int index_of(vector<Column> list, string item);//finds the column with name item in columns
     
     vector<string> get_tuple(int index);            
     vector<string> get_column(int index);
     void add_column(Column new_column);           // Push a vector onto the back of the table
 	void add_relation(Relation *r1, Relation *r2);// Add a relation to a relation, r1's name is the name of it
     void remove_column(int index);                // Remove the given column, might take iterator
-    void add_tuple(vector<string> tuple);         
-    void remove_row(int index);                   // (or iterator), remove the same index from each column.
+    void add_tuple(vector<string> tuple);         // Add a row to the Relation
+    void remove_tuple(int index);                 // (or iterator), remove the same index from each column.
 	void copy_attrs(Relation *r);                 // Copy this relation's columns to r's
 	int size();                                   // Returns the # of rows in the table, length of vector basically
     
