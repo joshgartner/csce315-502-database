@@ -7,6 +7,7 @@
 #include <boost/xpressive/xpressive.hpp>
 #include <boost/xpressive/regex_actions.hpp>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -20,7 +21,7 @@ using std::string;
 using std::cout;
 
 enum { CREATE, UPDATE, INSERT, DELETE, SELECT, PROJECT,
-       RENAME, UNION, DIFFERENCE, PRODUCT, NATURAL_JOIN };
+       RENAME, EXPR };
 
 class Parser{
 public:
@@ -29,6 +30,7 @@ public:
 	Database *dbms; // Handle to the database
 	sregex id, literals, op, type; // Regexes for terminals
 	sregex query_op, atomic_expr;
+	int n_temps; // Number of temporary relations created, used so temp names don't overlap.
 
 	Relation * match(string &input); 
 	vector<bool> condition(Relation *r, string input);
@@ -43,6 +45,7 @@ public:
 	
 	Relation * expr_query(string &name, Relation *r1, Relation *r2, string operation);
 	
+	string temp_name();
 	void show_vector(vector<string> &v, string title);
 	void remove_quotes(string &s);
 	void remove_quotes(vector<string> &v);

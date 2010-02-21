@@ -8,31 +8,46 @@
 using namespace std;
 
 // Make some test strings:
-string test1  = "CREATE TABLE animals (name VARCHAR(20), kind VARCHAR(8), years INTEGER) PRIMARY KEY (name, kind);";
-string test2  = "INSERT INTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
-string test3  = "INSERT INTO animals VALUES FROM (\"Spot\", \"dog\", 10);";
-string test4  = "INSERT INTO animals VALUES FROM (\"Snoopy\", \"dog\", 3);";
-string test5  = "INSERT INTO animals VALUES FROM (\"Tweety\", \"bird\", 1);";
-string test6  = "INSERT INTO animals VALUES FROM (\"Joe\", \"bird\", 2);";
-string test7  = "dogs <- select (kind == \"dog\") animals;";
-string test8  = "dogs <- select (kind == \"dog\" && (name == \"Spot\")) animals;";
-string test9  = "old_dogs <- select (years < 10) animals;";
-string test10  = "cats_or_dogs <- dogs + (select (kind == \"cat\") animals;";
-string test11 = "CREATE TABLE species (kind VARCHAR(10)) PRIMARY KEY (kind);";
-string test12 = "INSERT INTO species VALUES FROM RELATION project (kind) animals;";
-string test13 = "a <- rename (aname, akind) (project (name, kind) animals;";
-string test14 = "common_names <- project (name) (select (aname == name || akind != kind) (a * animals);";
-string test15 = "answer <- common_names;";
-string test16 = "UPDATE animals SET kind = \"fish\", age = 7 WHERE name == \"Joe\"";
-string test17 = "DELETE FROM animals WHERE name == \"Joe\"";
-string test18 = "blah blah blah + hey hey hey";
-string test19 = "relation1 * relation2";
-string test20 = "relation3 JOIN relation4";
+string create1 = "CREATE TABLE animals (name VARCHAR(20), kind VARCHAR(8), years INTEGER) PRIMARY KEY (name, kind);";
+string create2 = "CREATE TABLE cars (make VARCHAR(20), model VARCHAR(20), year INTEGER) PRIMARY KEY (make, model, year);";
+string create3 = "CREATE TABLE toys (name VARCHAR(20)) PRIMARY KEY (name);";
 
-string fail1 = "BAD input hahaha;";
-string fail2 = "INSERTINTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
-string fail3 = "INSERT INTOanimals VALUES FROM (\"Joe\", \"cat\", 4);";
-string fail4 = "INSERT INTO animals VALUES FROM(\"Joe\", \"cat\", 4);";
+string insert1 = "INSERT INTO animals VALUES FROM (\"Joe\", \"cat\", 4);";
+string insert2 = "INSERT INTO animals VALUES FROM (\"Spot\", \"dog\", 10);";
+string insert3 = "INSERT INTO animals VALUES FROM (\"Snoopy\", \"dog\", 3);";
+string insert4 = "INSERT INTO animals VALUES FROM (\"Tweety\", \"bird\", 1);";
+string insert5 = "INSERT INTO animals VALUES FROM (\"Joe\", \"bird\", 2);";
+string insert6 = "INSERT INTO cars VALUES FROM (\"VW\", \"Jetta\", 2008);";
+string insert7 = "INSERT INTO cars VALUES FROM (\"Ford\", \"Ranger\", 2004);";
+string insert8 = "INSERT INTO cars VALUES FROM (\"Ford\", \"Ranger\", 2000);";
+string insert9 = "INSERT INTO toys VALUES FROM (\"Legos\");";
+
+string select1 = "dogs <- select (kind == \"dog\") animals;";
+string select2 = "dogs <- select (kind == \"dog\" && (name == \"Spot\")) animals;";
+string select3 = "new_and_old <- select (model == \"Jetta\" || (year < 2001)) cars;";
+string select4 = "best_toys <- select (name == \"GI Joe\") toys;";
+
+string project1 = "animal_names <- project (name) animals;";
+string project2 = "car_types <- project (model, year) cars;";
+
+string update1 = "UPDATE animals SET kind = \"fish\", age = 7 WHERE name == \"Joe\";";
+string update2 = "UPDATE cars SET make = \"CC\", age = 2007 WHERE make == \"VW\";";
+string update3 = "UPDATE toys SET name = \"GIJoe\" WHERE name == \"Legos\";";
+
+string delete1 = "DELETE FROM animals WHERE name == \"Joe\";";
+string delete2 = "DELETE FROM cars WHERE year < \"2008\";";
+
+string test1 = "c <- a + b;";
+string test2 = "c <- a - b;";
+string test3 = "c <- a * b;";
+string test4 = "c <- a JOIN b;";
+string test5 = "a + b";
+string test6 = "a - b";
+string test7 = "a * b";
+string test8 = "a JOIN b";
+string test9 = "c <- (a - b) + (select (kind == \"dog\") animals);";
+string test10 = "c <- (select (kind == \"dog\") animals) + (a - b);";
+
 
 vector<string> test_str;
 
@@ -40,6 +55,30 @@ int main(){
 	Database dbms;
 
 	// TEST: Create Test String vector:
+	test_str.push_back(create1); // Create
+	test_str.push_back(create2);
+	test_str.push_back(create3);
+	test_str.push_back(insert1); // Insert
+	test_str.push_back(insert2);
+	test_str.push_back(insert3);
+	test_str.push_back(insert4);
+	test_str.push_back(insert5);
+	test_str.push_back(insert6);
+	test_str.push_back(insert7);
+	test_str.push_back(insert8);
+	test_str.push_back(insert9);
+	test_str.push_back(select1); // Select
+	test_str.push_back(select2);
+	test_str.push_back(select3);
+	test_str.push_back(select4);
+	test_str.push_back(project1); // Project
+	test_str.push_back(project2);
+	test_str.push_back(update1); // Update
+	test_str.push_back(update2); 
+	test_str.push_back(update3);
+	test_str.push_back(delete1); // Delete
+	test_str.push_back(delete2);
+	/*
 	test_str.push_back(test1);
 	test_str.push_back(test2);
 	test_str.push_back(test3);
@@ -47,25 +86,9 @@ int main(){
 	test_str.push_back(test5);
 	test_str.push_back(test6);
 	test_str.push_back(test7);
-	test_str.push_back(test8);
+	test_str.push_back(test8); 
 	test_str.push_back(test9);
-	test_str.push_back(test10);
-	/*
-	test_str.push_back(test11);
-	test_str.push_back(test12);
-	test_str.push_back(test13);
-	test_str.push_back(test14);
-	test_str.push_back(test15);
-	test_str.push_back(test16);
-	test_str.push_back(test17);
-	test_str.push_back(test18);
-	test_str.push_back(test19);
-	test_str.push_back(test20); 
-
-	test_str.push_back(fail1);
-	test_str.push_back(fail2);
-	test_str.push_back(fail3);
-	test_str.push_back(fail4); */
+	test_str.push_back(test10); */
 
 	cout << "\n-- Database Test Suite\n";
 	cout << "Enter database command or: \n";
@@ -79,7 +102,7 @@ int main(){
             break;
 
 		if(str[0] == 't'){
-			for(unsigned int i = 0; i < test_str.size(); i++){
+			for(int i = 0; i < (int) test_str.size(); i++){
 				cout << "\n\nTesting: " << test_str[i] << "\n";
 				dbms.execute(test_str[i]);
 			}
