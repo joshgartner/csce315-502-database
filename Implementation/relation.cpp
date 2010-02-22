@@ -182,9 +182,9 @@ void Relation::remove_column(int index){
 */
 void Relation::add_tuple(vector<string> tuple){
 	if(tuple.size() != columns.size()){
-		cout << "Column Size: " << columns.size();
-		cout << "Tuples Size: " << tuple.size();
-		//throw Error("\n **Row sizes must match");
+		cout << "\nColumn Size: " << columns.size();
+		cout << "\nTuples Size: " << tuple.size();
+		throw Error("\n **Row sizes must match");
 	}
 
 	for(int i = 0; i < (int) tuple.size(); i++){

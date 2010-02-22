@@ -3,7 +3,7 @@
 
 /*
 File   : database.hpp
-Authors: Darren White, John Wesson
+Authors: Darren White, John Wesson, Michael Atkinson
 Team   : Team X
 */
 
