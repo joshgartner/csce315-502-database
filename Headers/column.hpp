@@ -12,11 +12,6 @@ Team   : Team X
 
 using namespace std;
 
-//both need to be length 7
-const string VARCHAR_ID = "VARCHAR";
-const string INTEGER_ID = "INTEGER";
-
-enum column_type { int_type, string_type };
 
 class Column{
 public:
@@ -24,7 +19,6 @@ public:
 	Column(Column* from_column);
 
 	string name;
-	column_type type;
 	vector<string> data;
 	bool b_primary_key;
 
