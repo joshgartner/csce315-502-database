@@ -24,7 +24,6 @@ Column::Column(string str_name, string type_id, bool b_is_primary_key){
 Column::Column(Column* from_column){
        name = from_column->name;
        b_primary_key = from_column->b_primary_key;
-       type = from_column->type;
        data = from_column->data;
 }
 
@@ -34,8 +33,7 @@ Column::Column(Column* from_column){
 */
 string Column::to_string(){
 	string str_column = (b_primary_key)? "1\n" : "0\n";
-	str_column += (type == int_type)? INTEGER_ID : VARCHAR_ID;
-	str_column += "\n" + name;
+	str_column += name;
 
 	for (unsigned int i = 0; i < data.size(); i++){
 		str_column += "\n" + data[i];
