@@ -10,11 +10,17 @@ Team   : Team X
 #include <iostream>  // For debug
 using std::cout;
 
+/* Column(string str_name, string type_id, bool b_is_primary_key):
+	constructor that sets name to str_name and b_primary_key to b_is_primary_key
+*/
 Column::Column(string str_name, string type_id, bool b_is_primary_key){
 	name = str_name;
 	b_primary_key = b_is_primary_key;
 }
 
+/* Column(Column* from_column):
+	copy constructor(deep copy)
+*/
 Column::Column(Column* from_column){
        name = from_column->name;
        b_primary_key = from_column->b_primary_key;
@@ -22,6 +28,10 @@ Column::Column(Column* from_column){
        data = from_column->data;
 }
 
+/* to_string():
+	constructs a string from the various data associated with column
+	so that it can be written to a file
+*/
 string Column::to_string(){
 	string str_column = (b_primary_key)? "1\n" : "0\n";
 	str_column += (type == int_type)? INTEGER_ID : VARCHAR_ID;
@@ -34,6 +44,11 @@ string Column::to_string(){
 	return str_column;
 }
 
+/* add_item(string item):
+	adds an item to the end of the column
+	Throws an Error if this attribute is a primary key and item
+	already exists in the Column
+*/
 void Column::add_item(string item){
    if((b_primary_key) && contains(item)){
        throw Error("\n **Cannot have duplicate values under primary key.");
@@ -41,25 +56,30 @@ void Column::add_item(string item){
    data.push_back(item);
 }
 
-void Column::add_items(vector<string> items){
-   for(unsigned int i = 0; i < items.size(); i++){
-       add_item(items[i]);
-   }
-}
-
+/* get_item(int index):
+	returns the item at index
+*/
 string Column::get_item(int index){
 	return data[index];
 }
 
-//sets the value at index to item
+/* set_item(int index, string item):
+	overwrites the value at index to item
+*/
 void Column::set_item(int index, string item){
 	data[index] = item;
 }
 
+/* get_items():
+	returns all of the values in the Column
+*/
 vector<string> Column::get_items(){
 	return data;
 }
 
+/* contains(string item):
+	returns true if the column contains item, otherwise false
+*/
 bool Column::contains(string item){
    bool b_contains = false;
 
@@ -71,20 +91,16 @@ bool Column::contains(string item){
    return b_contains;
 }
 
-vector<string> Column::get_items(int start, int end){
-	vector<string> return_items;
-
-	for (int i = start; i < end; i++){
-		return_items.push_back(data[i]);
-	}
-
-	return return_items;
-}
-
+/* remove_item(int index):
+	removes the item at index from Column
+*/
 void Column::remove_item(int index){
 	data.erase(data.begin() + index);
 }
 
+/* remove_items():
+	clears all of the items from the Column
+*/
 void Column::remove_items(){
 	data.clear();
 }
