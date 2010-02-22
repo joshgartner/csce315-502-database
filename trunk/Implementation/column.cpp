@@ -12,17 +12,6 @@ using std::cout;
 
 Column::Column(string str_name, string type_id, bool b_is_primary_key){
 	name = str_name;
-
-	if (type_id.compare(VARCHAR_ID) == 0){
-		type = string_type;
-	}
-	else if(type_id.compare(INTEGER_ID) == 0){
-		type = int_type;
-	}
-	else{
-		cout << "Type id was: " << type_id << "\n";
-		throw Error(" **Invalid type found, types are: VARCHAR or INTEGER");
-	}
 	b_primary_key = b_is_primary_key;
 }
 
