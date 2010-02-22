@@ -39,14 +39,6 @@ void Database::execute(string query){
 	r = parser->match(query);
 	add_relation(r);
 	r->display();
-	
-	/*try{
-		r = parser->match(query);
-		add_relation(r);
-		r->display();
-	}catch(exception& e){
-		cout << e.what() << "\n";
-	}*/
 } 
 
 /* execute(string name, string query, vector<vector<string> > &result):
@@ -150,7 +142,7 @@ void Database::load(string table_name){
 		fs.getline(str_name, 256);
 
 		//create a column based on retrieved values
-		Column new_column = Column((string)str_name, str_type, (is_primary_key == 1));
+		Column new_column = Column((string)str_name, (is_primary_key == 1));
 
 		//retrieve the data and add it to Column
 		for(int k = 0; k < num_tuples; k++){
@@ -316,12 +308,12 @@ Relation * Database::x_product(string str_name, Relation *r1, Relation *r2){
 
    //setup columns in the x-product relation
    for(int i = 0; i < (int)r1->columns.size(); i++){
-       Column new_column(r1->columns[i].name, "VARCHAR", false);
+       Column new_column(r1->columns[i].name, false);
        new_relation->add_column(new_column);
    }
 
    for(int i = 0; i < (int)r2->columns.size(); i++){
-       Column new_column(r2->columns[i].name, "VARCHAR", false);
+       Column new_column(r2->columns[i].name, false);
        new_relation->add_column(new_column);
    }
 
@@ -354,7 +346,7 @@ Relation * Database::natural_join(string str_name, Relation *r1, Relation *r2){
 
    //setup columns in the natural join relation
    for (int i = 0; i < (int)r1->columns.size(); i++){
-       Column new_column(r1->columns[i].name, "VARCHAR", false);
+       Column new_column(r1->columns[i].name, false);
        new_relation->add_column(new_column);
    }
 
@@ -363,7 +355,7 @@ Relation * Database::natural_join(string str_name, Relation *r1, Relation *r2){
    //add the column to the natural join
    for (int i = 0; i < (int)r2->columns.size(); i++){
        if (new_relation->index_of(new_relation->columns, r2->columns[i].name) == -1){
-           Column new_column(r2->columns[i].name, "VARCHAR", false);
+           Column new_column(r2->columns[i].name, false);
            new_relation->add_column(new_column);
        }
        else{
