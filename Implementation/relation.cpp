@@ -227,7 +227,7 @@ void Relation::display(){
 
 	//first display attribute names, and if they are primary keys
 	for(unsigned int col = 0; col < columns.size(); col++){
-		string str_output = (columns[col].isPrimary())? "*" : "";
+		string str_output = (columns[col].b_primary_key)? "*" : "";
 		str_output += columns[col].get_name();
 
 		cout << left << setw(15);

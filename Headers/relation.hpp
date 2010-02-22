@@ -31,9 +31,9 @@ public:
 	bool b_save;             // If this flag is true, the relation is persistent
     vector<Column> columns;  // Representation of the relation table
 
-	int index_of(vector<string> list, string item);
-	int index_of(vector<int> list, int item);
-	int index_of(vector<Column> list, string item); // Finds the column with name "item" in columns
+	int index_of(vector<string> list, string item); // Finds "item" in list
+	int index_of(vector<int> list, int item);		// Finds "item" in list (for primary keys)
+	int index_of(vector<Column> list, string item); // Finds the column with attribute name "item" in columns
     
     vector<string> get_tuple(int index);            
     vector<string> get_column(int index);
