@@ -46,7 +46,7 @@ string Column::to_string(){
 }
 
 void Column::add_item(string item){
-   if ((b_primary_key) && contains(item)){
+   if((b_primary_key) && contains(item)){
        throw Error("\n **Cannot have duplicate values under primary key.");
    }
    data.push_back(item);
@@ -72,15 +72,14 @@ vector<string> Column::get_items(){
 }
 
 bool Column::contains(string item){
-       bool b_contains = false;
+   bool b_contains = false;
 
-       for (int i = 0; i < (int) data.size(); i++){
-               if (item == data[i]){
-                       b_contains = true;
-               }
+   for(int i = 0; i < (int) data.size(); i++){
+       if(item == data[i]){
+           b_contains = true;
        }
-
-       return b_contains;
+   }
+   return b_contains;
 }
 
 vector<string> Column::get_items(int start, int end){

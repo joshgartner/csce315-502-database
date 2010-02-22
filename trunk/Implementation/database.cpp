@@ -2,7 +2,7 @@
 
 /*
 File   : database.cpp
-Authors: Darren White, John Wesson
+Authors: Darren White, John Wesson, Michael Atkinson
 Team   : Team X
 */
 
@@ -36,13 +36,17 @@ Database::~Database(){
 void Database::execute(string query){
 	Relation *r = new Relation();
 	parser->remove_semicolons(query);
-	try{
+	r = parser->match(query);
+	add_relation(r);
+	r->display();
+	
+	/*try{
 		r = parser->match(query);
 		add_relation(r);
 		r->display();
 	}catch(exception& e){
 		cout << e.what() << "\n";
-	}
+	}*/
 } 
 
 /* execute(string name, string query, vector<vector<string> > &result):
@@ -338,10 +342,72 @@ Relation * Database::x_product(string str_name, Relation *r1, Relation *r2){
    return new_relation;
 }
 
-/* FIXME:
+/* natural_join(string name, Relation *r1, Relation *r2):
+       Computes the natural join of r1 and r2 and returns the result.
 */
-Relation * Database::natural_join(string name, Relation *r1, Relation *r2){
-	return r1;
+Relation * Database::natural_join(string str_name, Relation *r1, Relation *r2){
+   Relation* new_relation = new Relation();
+   new_relation->name = str_name;
+   new_relation->b_save = false;
+
+   vector<string> common_attributes;
+
+   //setup columns in the natural join relation
+   for (int i = 0; i < (int)r1->columns.size(); i++){
+       Column new_column(r1->columns[i].name, "VARCHAR", false);
+       new_relation->add_column(new_column);
+   }
+
+   //check if attribute in r2 matches attribute from r1, if so, this attribute
+   //should be used to check for equality in natural join, if not, we need to
+   //add the column to the natural join
+   for (int i = 0; i < (int)r2->columns.size(); i++){
+       if (new_relation->index_of(new_relation->columns, r2->columns[i].name) == -1){
+           Column new_column(r2->columns[i].name, "VARCHAR", false);
+           new_relation->add_column(new_column);
+       }
+       else{
+           common_attributes.push_back(r2->columns[i].name);
+       }
+   }
+
+   //now add tuples to the natural join relation
+   for (int i = 0; i < r1->size(); i++){
+       //get the values to compare from r1
+       vector<string> lhs_values;
+       for (int j = 0; j < (int)common_attributes.size(); j++){
+           lhs_values.push_back(r1->columns[r1->index_of(r1->columns, common_attributes[j])].get_item(i));
+       }
+
+       for (int j = 0; j < r2->size(); j++){
+           //compare the values from r2
+           bool b_equivalent = true;
+
+           //check if this tuple matches tuple from r1 on shared attributes
+           for (int k = 0; k < (int)common_attributes.size(); k++){
+               if (lhs_values[k] != r2->columns[r2->index_of(r2->columns, common_attributes[k])].get_item(j)){
+                   b_equivalent = false;
+               }
+           }
+
+           //if the two tuples have matching values on shared attributes, pair them and insert into new_relation
+           if (b_equivalent){
+               vector<string> final_tuple = r1->get_tuple(i);
+               vector<string> rhs = r2->get_tuple(j);
+
+               //add values from rhs to final_tuple that are not already there
+				for (int k = 0; k < (int)rhs.size(); k++){
+				   if (new_relation->index_of(lhs_values, rhs[k]) == -1){
+					   final_tuple.push_back(rhs[k]);
+				   }
+				}
+
+               new_relation->add_tuple(final_tuple);
+           }
+       }
+   }
+
+   return new_relation;
 }
 
 
