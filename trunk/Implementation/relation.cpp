@@ -1,15 +1,37 @@
 #include "relation.hpp"
 
-/* FIXME: Create empty relation (otherwise known as a table)
+/*
+File   : relation.cpp
+Authors: Darren White, John Wesson
+Team   : Team X
+*/
+
+/* Constructor:
+	Create empty relation (otherwise known as a table)
 */
 Relation::Relation(){}
 
-/* Constructor - Create relation with given data
+/* Constructor:
+	Create a relation from another relation.  Deep copy.
+*/
+Relation::Relation(Relation* from_relation){
+   name = from_relation->name;
+   b_save = from_relation->b_save;
+
+   for(int i = 0; i < (int)from_relation->columns.size(); i++){
+       Column new_column = Column(&(from_relation->columns[i]));
+       add_column(new_column);
+   }
+}
+
+/* Constructor:
+	Create relation with given data
 */
 Relation::Relation(string str_name, vector<string> attributes, vector<string> types, vector<string> primary_keys){
 	name = str_name;
 	vector<int> primary_key_indices;
 	bool b_valid_data = true;
+	b_save = false;
 
 	if(attributes.size() != types.size()){
 		cout << "\nNumber of attributes must match types";
@@ -59,11 +81,13 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 	}
 }
 
-/* FIXME: Deconstructor
+/* Deconstructor:
 */
 Relation::~Relation(){}
 
-/* Finds item in list and returns the index
+/* index_of(vector<string> list, string item):
+	Finds item in list and returns the index
+	Return: -1 if not successful, index otherwise
 */
 int Relation::index_of(vector<string> list, string item){
 	int index;
@@ -76,7 +100,9 @@ int Relation::index_of(vector<string> list, string item){
 	return -1;
 }
 
-/* Finds item in list and returns the index
+/* index_of(vector<int> list, int item):
+	Finds item in list and returns the index
+	Return: -1 if not found, index otherwise
 */
 int Relation::index_of(vector<int> list, int item){
 	int index;
@@ -89,7 +115,8 @@ int Relation::index_of(vector<int> list, int item){
 	return -1;
 }
 
-/* Finds the Column in list with name item
+/* index_of(vector<Column> list, string item):
+	Finds the Column in list with name item
 */
 int Relation::index_of(vector<Column> list, string item){
 	int index;
@@ -122,19 +149,36 @@ vector<string> Relation::get_column(int index){
 	return columns[index].get_items();
 }
 
-/* Add a column to the table
+
+/* get_items_for_user:
+	returns the vector of tuples that represents all the data (not attribute names) in a Relation.
+    This is used to return data via a back_inserter.
+*/
+vector< vector<string> > Relation::get_items_for_user(){
+   vector< vector<string> > return_items;
+   for(int i = 0; i < size(); i++){
+       return_items.push_back(get_tuple(i));
+   }
+
+   return return_items;
+}
+
+/* add_column(Column new_column):
+	Add a column to the table
 */
 void Relation::add_column(Column new_column){
 	columns.push_back(new_column);
 }
 
-/* Remove the given column, might take iterator
+/* remove_column(int index):
+	Remove the given column, might take iterator
 */
 void Relation::remove_column(int index){
 	columns.erase(columns.begin() + index);
 }
 
-/* Add a row to the table
+/* add_tuple(vector<string> tuple):
+	Add a row to the table
 */
 void Relation::add_tuple(vector<string> tuple){
 	if(tuple.size() != columns.size()){
@@ -143,7 +187,7 @@ void Relation::add_tuple(vector<string> tuple){
 		//throw Error("\n **Row sizes must match");
 	}
 
-	for(unsigned int i = 0; i < tuple.size(); i++){
+	for(int i = 0; i < (int) tuple.size(); i++){
 		columns[i].add_item(tuple[i]);
 	}
 }
@@ -157,7 +201,7 @@ void Relation::remove_tuple(int index){
 	}
 }
 
-/* copy_attrs(Relation *r)
+/* copy_attrs(Relation *r):
 	Takes all the columns from this relation and copies them to r's.
 	The columns are then cleared in the new relation.  Useful for queries.
 */
@@ -222,7 +266,12 @@ int Relation::str_compare(string left, string right){
 		return -1;
 	}
 }
-/* 
+/* compare(string &attr, string &value, string &op):
+	Takes an attribute, a value, and an operation.  This function will
+	compare this value to every entry under the attribute column and update
+	a return vector of bools to either true or false, if the entry meets
+	the condition.  Some comparisons only make sense for integers, so those
+	are converted during the comparison using str_compare.
 */
 vector<bool> Relation::compare(string &attr, string &value, string &op){
 	cout << "\nComparing " << attr << " " << op << " " << value;
@@ -293,11 +342,35 @@ vector<bool> Relation::compare(string &attr, string &value, string &op){
 	values are set to corresponding values in literals
 */
 void Relation::update_attrs(vector<string> &attr, vector<string> &literals, int index){
-
-	for (unsigned int i = 0; i < attr.size(); i++){
+	if(attr.size() != literals.size()){
+		throw Error("\n **Error in update: Must assign a literal to each attribute");
+	}
+	for (int i = 0; i < (int) attr.size(); i++){
 		//get the column corresponding to attr
 		int n_col = index_of(columns, attr[i]);
+		if(n_col == -1){
+			throw Error("\n **Error in update: attribute not found");
+		}
 		//set the value at index of the column to new value
 		columns[n_col].set_item(index, literals[i]);
 	}
 }
+
+/* is_union_compatible(Relation* r):
+       checks if r is union-compatible with the Relation, that is, they have the same
+       set of attributes (IN THE SAME ORDER).
+*/
+bool Relation::is_union_compatible(Relation* r){
+   if (r->columns.size() != columns.size()){
+       return false;
+   }
+
+   for (int i = 0; i < (int)columns.size(); i++){
+       if (columns[i].get_name() != r->columns[i].get_name()){
+               return false;
+       }
+   }
+   return true;
+}
+
+
