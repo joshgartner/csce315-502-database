@@ -50,7 +50,6 @@ Parser::Parser(){
 	Return: A pointer to the relation created.
 */
 Relation * Parser::match(string &input){
-	cout << "\nMatching:" << input;  // DEBUG
 	int n = -1; // The switch statement condition
 	string name, expr1, expr2, expr_op;
 	Relation * r;
@@ -87,8 +86,6 @@ Relation * Parser::match(string &input){
 		case EXPR   :
 			if(name.empty())
 				name = temp_name();      // Generate a temporary name
-			cout << "\nExpr1:" << expr1; // DEBUG
-			cout << "\nExpr2:" << expr2; // DEBUG
 			r1 = match(expr1);  // LHS side of the operation
 			r2 = match(expr2);  // RHS side of the operation
 			r = expr_query(name, r1, r2, expr_op);
@@ -128,13 +125,8 @@ Relation * Parser::create_cmd(string &cmd){
 		icase("PRIMARY KEY") >> *_s >> keys >> *_s);
 
 	if(regex_match(cmd, cmd_create)){
-		cout << "Trying to make relation:" << name; // DEBUG
-		show_vector(v_attr, "Attributes"); // DEBUG
-		show_vector(v_types,"Types     "); // DEBUG
-		show_vector(v_keys, "Keys      "); // DEBUG
 		Relation *r = new Relation(name, v_attr, v_types, v_keys);
 		r->b_save = true;     // This relation needs to be saved
-		cout << "\nRelation <" << name << "> created."; // DEBUG 
 		return r;
 	}
 	else
@@ -159,14 +151,11 @@ Relation * Parser::insert_cmd(string &cmd){
 
 	if(regex_match(cmd, cmd_insert)){
 		Relation *r = dbms->get_relation(name); 
-		cout << "\nRelation Name:" << name;  // DEBUG
 		if(expr.empty()){  // VALUES FROM case
 			remove_quotes(v_tuple);
-			show_vector(v_tuple, "Tuples");  // DEBUG
 			r->add_tuple(v_tuple);
 		}
 		else{ // FROM RELATION case
-			cout << "\nFollow Expr is:" << expr; // DEBUG
 			Relation *from_relation = match(expr);
 			r = dbms->insert(r, from_relation);
 		}
@@ -201,13 +190,8 @@ Relation * Parser::update_cmd(string &cmd){
 		for(int i = 0; i < (int) matches.size(); i++){
 			if(matches[i] == true){
 				r->update_attrs(v_attr, v_literals, i);
-				cout << "Assigned index in update: " << i; // DEBUG
 			}
 		}
-		cout << "\nRelation Updated: " << name; // DEBUG
-		show_vector(v_attr, "Attributes"); // DEBUG
-		show_vector(v_literals, "Literals"); // DEBUG
-		cout << "\nCondition: " << cond << "\n"; // DEBUG
 		return r;
 	}
 	else
@@ -231,12 +215,9 @@ Relation * Parser::delete_cmd(string &cmd){
 		Relation *r = dbms->get_relation(name);
 		vector<bool> matches;
 		matches = condition(r, cond);   // Matches now has index to row we want.
-		cout << "\nDeleting from: " << name; // DEBUG
-		cout << "\nCondition    : " << cond; // DEBUG
 		for(int i = (int) matches.size()-1; i >= 0; i--){ // Remove the appropriate rows
 			if(matches[i] == true){
 				r->remove_tuple(i);
-				cout << "\nDeleted row: " << i; // DEBUG
 			}
 		}
 		return r;
@@ -268,9 +249,6 @@ Relation * Parser::select_query(string &cmd){
 	if(regex_match(cmd, what, selection)){
 		if(name.empty())
 			name = temp_name();
-		cout << "\nRelation name  :" << name; // DEBUG
-		cout << "\nCondtions were :" << cond; // DEBUG
-		cout << "\nFrom expression:" << more; // DEBUG
 		Relation *r = new Relation;
 		Relation *from_relation = match(more);
 		from_relation->copy_attrs(r);  // Copy the column names to the relation we will return
@@ -312,9 +290,6 @@ Relation * Parser::project_query(string &cmd){
 	if(regex_match(cmd, projection)){
 		if(name.empty())
 			name = temp_name();
-		cout << "\nRelation name  : " << name; // DEBUG
-		cout << "\nFrom expression: " << more; // DEBUG
-		show_vector(v_attrs, "Attributes");    // DEBUG
 		Relation *r;
 		Relation *from_relation = match(more);
 		r = dbms->project(name, from_relation, v_attrs);
@@ -348,9 +323,6 @@ Relation * Parser::rename_query(string &cmd){
 	if(regex_match(cmd, renaming)){
 		if(name.empty())
 			name = temp_name();
-		cout << "\nRelation name  : " << name; // DEBUG
-		cout << "\nFrom expression: " << more; // DEBUG
-		show_vector(v_attrs, "Attributes");    // DEBUG
 		Relation *r;
 		Relation *from_relation = match(more);
 		r = dbms->rename(name, from_relation, v_attrs);
@@ -408,11 +380,6 @@ vector<bool> Parser::condition(Relation *r, string input){
 	while(!input.empty()){
 		if(regex_match(input, cond)){ // If there was a match, the variables will have data
 			remove_quotes(entry);  // Take off quotation marks from literal inputs
-			// DEBUG cout << "\nSuccessful condition match";
-			// DEBUG cout << "\nAttr :" << attr;
-			// DEBUG cout << "\nEntry:" << entry;
-			// DEBUG cout << "\nOp   :" << opr;
-			// DEBUG cout << "\nMore :" << more;
 			matches.push_back(result); // Result is currently just an empty vector
 			matches.back() = r->compare(attr, entry, opr); // Populate the vector with matches
 			input = more;
@@ -426,7 +393,6 @@ vector<bool> Parser::condition(Relation *r, string input){
 			input = more;
 		}
 		else if(regex_match(input, parens)){  // Nothing left, exit
-			// DEBUG cout << "\nEnd of condtion reached";
 			input = "";
 		}
 		else{
@@ -453,7 +419,6 @@ vector<bool> Parser::condition(Relation *r, string input){
 				break;
 			case '&':
 				for(int i = 0; i < r->size(); i++){
-					// DEBUG cout << "\nLast: " << last[i] << " Next to last: " << next_to_last[i];
 					if((last[i] == 1) && (next_to_last[i] == 1)){
 						result[i] = true;
 					}

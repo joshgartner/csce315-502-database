@@ -13,7 +13,7 @@ using std::cout;
 /* Column(string str_name, string type_id, bool b_is_primary_key):
 	constructor that sets name to str_name and b_primary_key to b_is_primary_key
 */
-Column::Column(string str_name, string type_id, bool b_is_primary_key){
+Column::Column(string str_name, bool b_is_primary_key){
 	name = str_name;
 	b_primary_key = b_is_primary_key;
 }

@@ -17,7 +17,7 @@ class Column{
 private:
 	vector<string> data;											//the values for this column
 public:
-	Column(string str_name, string type_id, bool b_is_primary_key); //constructor
+	Column(string str_name, bool b_is_primary_key); //constructor
 	Column(Column* from_column);									//copy constructor
 
 	string name;													//attribute name

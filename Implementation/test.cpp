@@ -26,6 +26,8 @@ string insert11 = "INSERT INTO table2 VALUES FROM (12, \"Joe\", \"Green\");";
 
 string join1 = "table3 <- table1 JOIN table2;";
 
+string complex = "test <- select (name == \"Sally\" && age < 20) (table1 JOIN table2);";
+
 int main(){
 	Database dbms;
 	vector<string> test_str;
@@ -44,13 +46,20 @@ int main(){
 	test_str.push_back(insert10);
 	test_str.push_back(insert11);
 	test_str.push_back(join1);
+	test_str.push_back(complex);
 
 	cout << "\n-- Database Test Suite\n";
 	cout << "Enter database command or: \n";
 	cout << "   <t> to run string tests\n";
 	cout << "   <q> to quit\n";
 	cout << "> ";
-		
+	
+	string table1 = "table1";
+	string table2 = "table2";
+
+	dbms.load(table1);
+	dbms.load(table2);
+
 	string str;
     while(getline(cin, str)){
         if(str.empty() || str[0] == 'q' || str[0] == 'Q')

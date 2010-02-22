@@ -64,12 +64,10 @@ Relation::Relation(string str_name, vector<string> attributes, vector<string> ty
 
 	//make column from each attribute and add to columns
 	for(int i = 0; i < (int) attributes.size(); i++){
-		string type_id = types[i].substr(0, 7);
-
 		//decide if this attribute is a primary key
 		bool b_is_primary_key = (index_of(primary_key_indices, i) != -1);
 
-		Column new_column(attributes[i], type_id, b_is_primary_key);
+		Column new_column(attributes[i], b_is_primary_key);
 		list_columns.push_back(new_column);
 	}
 
@@ -274,14 +272,10 @@ int Relation::str_compare(string left, string right){
 	are converted during the comparison using str_compare.
 */
 vector<bool> Relation::compare(string &attr, string &value, string &op){
-	cout << "\nComparing " << attr << " " << op << " " << value;
-	// DEBUG cout << "\nWhole relation:"; this->display();
-	
 	vector<bool> indexes(this->size(), false);
 	vector<string> data;
 	for(int i = 0; i < (int) columns.size(); i++){ // Find the right column
 		if(columns[i].get_name() == attr){
-			cout << "\nFound attr: " << attr;
 			data = columns[i].get_items();
 			break;
 		}
@@ -289,10 +283,8 @@ vector<bool> Relation::compare(string &attr, string &value, string &op){
 	// Perform the appropriate comparison, and update match vector
 	if(op == "=="){
 		for(int i = 0; i < (int) data.size(); i++){
-			cout << "\nDoes " << data[i] << "==" << value << "?";
 			if(data[i] == value){
 				indexes[i] = true;
-				// DEBUG cout << "\nData matched: " << data[i] << " and " << value;
 			}
 		}
 	}
@@ -305,10 +297,8 @@ vector<bool> Relation::compare(string &attr, string &value, string &op){
 	}
 	else if(op == "<"){
 		for(int i = 0; i < (int) data.size(); i++){
-		cout << "\nIs " << data[i] << "<" << value << "?";
 			if(str_compare(data[i], value) == 1){
 				indexes[i] = true;
-				// DEBUG cout << "\nData matched: " << data[i] << " and " << value;
 			}
 		}
 	}
@@ -323,7 +313,6 @@ vector<bool> Relation::compare(string &attr, string &value, string &op){
 		for(int i = 0; i < (int) data.size(); i++){
 			if(str_compare(data[i], value) >= 0){
 				indexes[i] = true;
-				// DEBUG cout << "\nData matched: " << data[i] << " and " << value;
 			}
 		}
 	}
