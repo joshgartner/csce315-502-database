@@ -1,6 +1,16 @@
 #include "parser.hpp"
 
-// Semantic Action, pushes argument into a vector
+/*
+File   : parser.cpp
+Authors: Darren White
+Team   : Team X
+*/
+
+/* struct pusher:
+	A structure of this type is required by boost::xpressive to call
+	functions from regular expression (regex) matching.  Pusher simply
+	calls the std::vector push_back function.
+*/
 struct pusher{
     typedef void result_type; // Result type, needed for xpressive
 
@@ -9,19 +19,19 @@ struct pusher{
         vec.push_back(val);
     }
 };
-
 function<pusher>::type const vpush = {{}};
 
 /* Constructor:
 	Initialize string regular expressions (sregex) commonly needed for
-	parsing operations.
+	parsing operations.  n_temps is an integer value containing the number
+	of temporary names assigned to relations.  This is to ensure that all
+	relations created are unique.
 */
 Parser::Parser(){
 	id         = (alpha >> *(alpha | _d | '_'));
 	literals   = (('"' >> +alnum >> '"') | +_d);
 	op         = (as_xpr("==") | "!=" | '<' | '>' | "<=" | ">=");
 	type       = (icase("VARCHAR") >> '(' >> +_d >> ')') | icase("INTEGER");
-	
 	query_op   = (as_xpr('+') | as_xpr('-') | as_xpr('*') | as_xpr("JOIN"));
 
 	atomic_expr = 
@@ -29,18 +39,19 @@ Parser::Parser(){
 		| *_s >> id >> *_s
 		| *_s >> by_ref(atomic_expr) >> *_s >> query_op >> *_s >> by_ref(atomic_expr);
 
-	n_temps = 0;
+	n_temps = 0; // A count of temporary names assigned
 }
 
 /* match(string &input):
-	This is the entry point for the Parser module.  It establishes some match
+	This is the entry point for the Parser module.  It establishes some regex match
 	criteria, searches for operations that need to be broken up like union, difference,
-	product, and natural_join, and splits around them if necessary.
+	product, and natural_join, and splits around them if necessary.  If a query is
+	of a temporary nature (and thus assigned no name), a name is generated for it.
 	Return: A pointer to the relation created.
 */
 Relation * Parser::match(string &input){
-	cout << "\nMatching:" << input;
-	int n = -1;
+	cout << "\nMatching:" << input;  // DEBUG
+	int n = -1; // The switch statement condition
 	string name, expr1, expr2, expr_op;
 	Relation * r;
 	Relation *r1;
@@ -74,116 +85,23 @@ Relation * Parser::match(string &input){
 		case PROJECT:  return project_query(input);
 		case RENAME :  return rename_query(input);
 		case EXPR   :
-			if(name.empty()){
-				name = temp_name();
-			}
-			cout << "\nExpr1:" << expr1;
-			cout << "\nExpr2:" << expr2;
-			r1 = match(expr1); 
-			r2 = match(expr2);
+			if(name.empty())
+				name = temp_name();      // Generate a temporary name
+			cout << "\nExpr1:" << expr1; // DEBUG
+			cout << "\nExpr2:" << expr2; // DEBUG
+			r1 = match(expr1);  // LHS side of the operation
+			r2 = match(expr2);  // RHS side of the operation
 			r = expr_query(name, r1, r2, expr_op);
-			if(name[0] == '$'){
-				dbms->add_relation(r);
-			}
+			if(name[0] == '$')
+				dbms->add_relation(r);   // Make Temp relations available to others
 			return r;
 		default:
-			if(!name.empty()){
-				return dbms->get_relation(name);
-			}
+			if(!name.empty())            // Input was a relation name
+				return dbms->get_relation(name); 
 			else
 				throw Error("\n **Parser Error: invalid input\n");
 	}
-}
-
-/* condition(Relation *r, string input, vector<bool> &matches):
-	A condition match is x op y {*}.  Or the condition can start with an open parenthesis.
-	A conjunction is || ({*}), and a comparison is && ({*}).  This function will evaluate each
-	condition by calling relation::compare, and store each of the results in a matrix of booleans.
-	The || and && operations are saved in a seperate vector.  At the end, the algorithm works
-	backwards through the matrix columns using the conditions.
-	Return:  A vector<bool> with 1's where the index matched everything.
-*/
-vector<bool> Parser::condition(Relation *r, string input){
-	string attr, entry, opr, more;
-	vector<bool> result(r->size(), false);
-	vector< vector<bool> > matches;
-	vector<char> symbol;
-	
-	sregex cond =
-		(*_s >> (s1 = id)[ref(attr) = s1] >> *_s >> (s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> 
-		*_s >> (s4 = *_)[ref(more) = s4]) | *_s >> ('(' >> *_s >> (s1 = id)[ref(attr) = s1] >> *_s >> 
-		(s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> *_s >> (s4 = *_)[ref(more) = s4]);
-	sregex conjunction =
-		skip(_s)(as_xpr("||") >> (s1 = *_)[ref(more) = s1]);
-	sregex comparison =
-		skip(_s)(as_xpr("&&") >> (s1 = *_)[ref(more) = s1]);
-	sregex parens =
-		skip(_s)(*(as_xpr(')')));
-
-	while(!input.empty()){
-		if(regex_match(input, cond)){
-			remove_quotes(entry);  
-			// DEBUG cout << "\nSuccessful condition match";
-			// DEBUG cout << "\nAttr :" << attr;
-			// DEBUG cout << "\nEntry:" << entry;
-			// DEBUG cout << "\nOp   :" << opr;
-			// DEBUG cout << "\nMore :" << more;
-			matches.push_back(result); // result will just be an empty placeholder vector
-			matches.back() = r->compare(attr, entry, opr);
-			input = more;
-		}
-		else if(regex_match(input, conjunction)){
-			symbol.push_back('|');
-			input = more;	
-		}
-		else if(regex_match(input, comparison)){
-			symbol.push_back('&');
-			input = more;
-		}
-		else if(regex_match(input, parens)){
-			// DEBUG cout << "\nEnd of condtion reached";
-			input = "";
-		}
-		else{
-			throw Error("\n **Parser Error: Invalid condition");
-		}
-	}
-	if((int) matches.size() == 1){
-		return matches[0];
-	}
-	vector< vector<bool> >::reverse_iterator matches_rit;
-	while(!symbol.empty()){
-		matches_rit = matches.rbegin();
-		vector<bool> last = *matches_rit;
-		vector<bool> next_to_last = *(++matches_rit);
-		switch(symbol.back()){
-			case '|':
-				for(int i = 0; i < r->size(); i++){
-					if((last[i] == 1) || (next_to_last[i] == 1)){
-						result[i] = true;
-					}
-				}
-				break;
-			case '&':
-				for(int i = 0; i < r->size(); i++){
-					// DEBUG cout << "\nLast: " << last[i] << " Next to last: " << next_to_last[i];
-					if((last[i] == 1) && (next_to_last[i] == 1)){
-						
-						result[i] = true;
-					}
-					else{
-						result[i] = false;
-					}
-				}
-				break;
-		}
-		symbol.pop_back();
-		matches.pop_back();
-		matches.pop_back();
-		matches.push_back(result);
-	}
-	return matches[0];
-}
+} // end match()
 
 /* create_cmd(string &cmd):
 	Parses and tokenizes command expressions all at once.  If the input was good, it creates
@@ -210,23 +128,24 @@ Relation * Parser::create_cmd(string &cmd){
 		icase("PRIMARY KEY") >> *_s >> keys >> *_s);
 
 	if(regex_match(cmd, cmd_create)){
-		cout << "Trying to make relation:" << name;
-		show_vector(v_attr, "Attributes");
-		show_vector(v_types,"Types     ");
-		show_vector(v_keys, "Keys      ");
+		cout << "Trying to make relation:" << name; // DEBUG
+		show_vector(v_attr, "Attributes"); // DEBUG
+		show_vector(v_types,"Types     "); // DEBUG
+		show_vector(v_keys, "Keys      "); // DEBUG
 		Relation *r = new Relation(name, v_attr, v_types, v_keys);
-		cout << "\nRelation <" << name << "> created."; // DEBUG only
+		r->b_save = true;     // This relation needs to be saved
+		cout << "\nRelation <" << name << "> created."; // DEBUG 
 		return r;
 	}
-	else{
+	else
 		throw Error("\n **Parser Error: create command\n");
-	}
-}
+} // end create_cmd
 
 /* insert_cmd(string &cmd):
 	Parses and tokenizes insert commands.  On a match, pulls the the required relation from the database and
 	calls insert on it.  In the FROM RELATION case, it evaluates the expr, and calls the overloaded insert.
-	Returns: The relation created
+	Throws an error if the input was bad
+	Return: Pointer to the new relation
 */
 Relation * Parser::insert_cmd(string &cmd){
 	string name, expr;
@@ -239,27 +158,30 @@ Relation * Parser::insert_cmd(string &cmd){
 		(s4 = id)[ref(name) = s4] >> *_s >> icase("VALUES FROM RELATION") >> *_s >> (s5 = *_)[ref(expr) = s5]);
 
 	if(regex_match(cmd, cmd_insert)){
-		Relation *r = dbms->get_relation(name);
-		cout << "\nRelation Name:" << name;
-		if(expr.empty()){
+		Relation *r = dbms->get_relation(name); 
+		cout << "\nRelation Name:" << name;  // DEBUG
+		if(expr.empty()){  // VALUES FROM case
 			remove_quotes(v_tuple);
-			show_vector(v_tuple, "Tuples");
+			show_vector(v_tuple, "Tuples");  // DEBUG
 			r->add_tuple(v_tuple);
 		}
-		else{
-			cout << "\nFollow Expr is:" << expr;
+		else{ // FROM RELATION case
+			cout << "\nFollow Expr is:" << expr; // DEBUG
 			Relation *from_relation = match(expr);
 			r = dbms->insert(r, from_relation);
 		}
 		return r;
 	}
-	else{
+	else
 		throw Error("\n **Parser Error: insert command\n");
-	}
-}
+} // end insert_cmd
 
 /* update_cmd(string &cmd):
-	
+	Parses and tokenizes update commands to change values in a relation.  On a match, pulls 
+	the the required relation from the database and calls database::update on it.
+	Will call condition to evaluate the condition portion.
+	Throws an error if the input was bad
+	Return: Pointer to the new relation
 */
 Relation * Parser::update_cmd(string &cmd){
 	string name, cond;
@@ -271,31 +193,33 @@ Relation * Parser::update_cmd(string &cmd){
 		*_s >> *(',' >> *_s >> (s4 = id)[vpush(ref(v_attr), s4)] >> *_s >> "=" >> *_s >> 
 		(s5 = literals)[vpush(ref(v_literals), s5)]) >> *_s >> icase("WHERE") >> *_s >> (s6 = *_)[ref(cond) = s6]);
 
-	if(regex_match(cmd, cmd_update)){
+	if(regex_match(cmd, cmd_update)){ // Populates vectors while matching
 		Relation *r = dbms->get_relation(name);
-		int size = r->size();
 		vector<bool> matches;
-		matches = condition(r, cond);   // Matches now has index to row we want.
+		matches = condition(r, cond);  // Matches now has index to rows needing to change.
 		remove_quotes(v_literals);
 		for(int i = 0; i < (int) matches.size(); i++){
 			if(matches[i] == true){
 				r->update_attrs(v_attr, v_literals, i);
-				cout << "Assigned index in update: " << i;
+				cout << "Assigned index in update: " << i; // DEBUG
 			}
 		}
-		cout << "\nRelation Updated: " << name;
-		show_vector(v_attr, "Attributes");
-		show_vector(v_literals, "Literals");
-		cout << "\nCondition: " << cond << "\n";
+		cout << "\nRelation Updated: " << name; // DEBUG
+		show_vector(v_attr, "Attributes"); // DEBUG
+		show_vector(v_literals, "Literals"); // DEBUG
+		cout << "\nCondition: " << cond << "\n"; // DEBUG
 		return r;
 	}
-	else{
+	else
 		throw Error("\n **Parser Error: update command\n");
-	}
-}
+} // end update_cmd
 
-
-
+/* delete_cmd(string &cmd):
+	Parses and tokenizes delete commands.  On a match, pulls the the required relation from the database and
+	calls delete on it.  Will call condition to evaluate the condition portion.
+	Throws an error if the input was bad
+	Return: Pointer to the new relation
+*/
 Relation * Parser::delete_cmd(string &cmd){
 	string name, cond;
 
@@ -303,27 +227,31 @@ Relation * Parser::delete_cmd(string &cmd){
 		(icase("DELETE FROM") >> *_s >> (s1 = id)[ref(name) = s1] >> *_s >> icase("WHERE") >> *_s >> 
 		(s2 = *_)[ref(cond) = s2]);
 
-	if(regex_match(cmd, cmd_delete)){
+	if(regex_match(cmd, cmd_delete)){  // Populates variables while matching
 		Relation *r = dbms->get_relation(name);
-		int size = r->size();
 		vector<bool> matches;
 		matches = condition(r, cond);   // Matches now has index to row we want.
-		cout << "\nDeleting from: " << name;
-		cout << "\nCondition    : " << cond;
-		for(unsigned int i = 0; i < matches.size(); i++){
+		cout << "\nDeleting from: " << name; // DEBUG
+		cout << "\nCondition    : " << cond; // DEBUG
+		for(int i = (int) matches.size()-1; i >= 0; i--){ // Remove the appropriate rows
 			if(matches[i] == true){
-				r->remove_row(i);
-				cout << "\nDeleted row: " << i;
+				r->remove_tuple(i);
+				cout << "\nDeleted row: " << i; // DEBUG
 			}
 		}
 		return r;
 	}
-	else{
+	else
 		throw Error("\n **Parser Error: delete command\n");
-	}
-}
+} // end delete
 
-
+/* select_query(string &cmd):
+	This query is performed entirely within the parser (unlike the others).  Will match the input
+	for a valid query, evaluate the conditions, and create a new relation.  In the case this is an
+	intermediate query (and it has no name), a temporary name is generated with temp_name().
+	Throws an error if the input is invalid.
+	Return:  The new relation
+*/
 Relation * Parser::select_query(string &cmd){
 	string name = "", cond, more;
 	smatch what;
@@ -340,29 +268,34 @@ Relation * Parser::select_query(string &cmd){
 	if(regex_match(cmd, what, selection)){
 		if(name.empty())
 			name = temp_name();
-		cout << "\nRelation name  :" << name;
-		cout << "\nCondtions were :" << cond;
-		cout << "\nFrom expression:" << more;
+		cout << "\nRelation name  :" << name; // DEBUG
+		cout << "\nCondtions were :" << cond; // DEBUG
+		cout << "\nFrom expression:" << more; // DEBUG
 		Relation *r = new Relation;
 		Relation *from_relation = match(more);
-		from_relation->copy_attrs(r);
+		from_relation->copy_attrs(r);  // Copy the column names to the relation we will return
 		r->name = name;
 		vector<bool> matches;
 		matches = condition(from_relation, cond);   // Matches now has indexes to rows we want.
 		for(int i = 0; i < (int) matches.size(); i++){
 			if(matches[i] == true){
-				r->add_tuple(from_relation->get_tuple(i));
+				r->add_tuple(from_relation->get_tuple(i)); // Add the selected rows
 			}
 		}
-		if(name[0] == '$'){
-			dbms->add_relation(r);
+		if(name[0] == '$'){  // If this was a temp, make it available to other operations
+			dbms->add_relation(r); 
 		}
 		return r;
 	}
 	else
 		throw Error("\n **Parser Error: select_query\n");
-}
+} // end select_query
 
+/* project_query(string &cmd):
+	Establishes criteria for matching a project query, attempts to match it, and creates the new
+	relation.  Will use database::project.  Throws an error if input is invalid
+	Return: The new relation
+*/
 Relation * Parser::project_query(string &cmd){
 	string name, more;
 	vector<string> v_attrs;
@@ -377,24 +310,28 @@ Relation * Parser::project_query(string &cmd){
 		(s2 = atomic_expr)[ref(more) = s2] >> *(as_xpr(')')));
 
 	if(regex_match(cmd, projection)){
-		if(name.empty()){
+		if(name.empty())
 			name = temp_name();
-		}
-		cout << "\nRelation name  : " << name;
-		cout << "\nFrom expression: " << more;
-		show_vector(v_attrs, "Attributes");
-		Relation *r = new Relation;
+		cout << "\nRelation name  : " << name; // DEBUG
+		cout << "\nFrom expression: " << more; // DEBUG
+		show_vector(v_attrs, "Attributes");    // DEBUG
+		Relation *r;
 		Relation *from_relation = match(more);
 		r = dbms->project(name, from_relation, v_attrs);
-		if(name[0] == '$'){
+		if(name[0] == '$'){  // If this was a temp, make it available to other operations
 			dbms->add_relation(r);
 		}
 		return r;
 	}
 	else
 		throw Error("\n **Parser Error: project_query\n");
-}
+} // end project_query
 
+/* rename_query(string &cmd):
+	Establishes criteria for matching a rename query, attempts to match it, and returns the changed relation.
+	Throws an error if the input is invalid.
+	Return: The new relation
+*/
 Relation * Parser::rename_query(string &cmd){
 	string name, more;
 	vector<string> v_attrs;
@@ -403,31 +340,34 @@ Relation * Parser::rename_query(string &cmd){
 		*_s >> ')');
 
 	sregex renaming = 
-		(*_s >> (s1 = id)[ref(name) = name] >> *_s >> "<-" >> *_s >> icase("rename") >> *_s >>
+		(*_s >> (s1 = id)[ref(name) = s1] >> *_s >> "<-" >> *_s >> icase("rename") >> *_s >>
 		attr_list >> *_s >> (s2 = atomic_expr)[ref(more) = s2])
 		| (*_s >> *(as_xpr('(')) >> *_s >> icase("rename") >> *_s >> attr_list >> *_s >> 
 		(s2 = atomic_expr)[ref(more) = s2] >> *(as_xpr(')')));
 
 	if(regex_match(cmd, renaming)){
-		if(name.empty()){
+		if(name.empty())
 			name = temp_name();
-		}
-		cout << "\nRelation name  : " << name;
-		cout << "\nFrom expression: " << more;
-		show_vector(v_attrs, "Attributes");
-		Relation *r = new Relation;
+		cout << "\nRelation name  : " << name; // DEBUG
+		cout << "\nFrom expression: " << more; // DEBUG
+		show_vector(v_attrs, "Attributes");    // DEBUG
+		Relation *r;
 		Relation *from_relation = match(more);
 		r = dbms->rename(name, from_relation, v_attrs);
-		if(name[0] == '$'){
+		if(name[0] == '$'){  // If this was a temp, make it available to other operations
 			dbms->add_relation(r);
 		}
 		return r;
 	}
 	else
 		throw Error("\n **Parser Error: rename_query\n");
-}
+} // end rename_query
 
-
+/* expr_query(string &name, Relation *r1, Relation *r2, string operation):
+	Calls the appropriate database operation based on the operation symbol.
+	Throws an error if the operation was invalid.  Note that JOIN is case sensitive
+	Return: the result sent from the database.
+*/
 Relation * Parser::expr_query(string &name, Relation *r1, Relation *r2, string operation){
 	switch(operation[0]){
 		case '+':  return dbms->union_of(name, r1, r2);
@@ -437,8 +377,108 @@ Relation * Parser::expr_query(string &name, Relation *r1, Relation *r2, string o
 		default:
 			throw Error(" **Parser Error: expr_query\n");
 	}
-}
+} // end expr_query
 
+/* condition(Relation *r, string input):
+	A condition match is x op y {*}.  The condition can also start with an open parenthesis.
+	A conjunction is || ({*}), and a comparison is && ({*}).  This function will evaluate each
+	condition individually by calling relation::compare, and store each of the results in a 
+	matrix of booleans.  The vector<bool> represents the indexes to the rows of a given relation.
+	The || and && operations are saved in a seperate vector.  At the end, the algorithm works
+	backwards through the matrix columns using the stored operations.
+	Return:  A vector<bool> with 1's where the index matched everything, 0's otherwise.
+*/
+vector<bool> Parser::condition(Relation *r, string input){
+	string attr, entry, opr, more;
+	vector<bool> result(r->size(), false); // Initialize the result vector to the correct size
+	vector< vector<bool> > matches;  // Matrix of comparisons
+	vector<char> symbol;  // Will contain the operators || or &&
+	
+	sregex cond =
+		(*_s >> (s1 = id)[ref(attr) = s1] >> *_s >> (s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> 
+		*_s >> (s4 = *_)[ref(more) = s4]) | *_s >> ('(' >> *_s >> (s1 = id)[ref(attr) = s1] >> *_s >> 
+		(s2 = op)[ref(opr) = s2] >> *_s >> (s3 = literals)[ref(entry) = s3] >> *_s >> (s4 = *_)[ref(more) = s4]);
+	sregex conjunction =
+		skip(_s)(as_xpr("||") >> (s1 = *_)[ref(more) = s1]);
+	sregex comparison =
+		skip(_s)(as_xpr("&&") >> (s1 = *_)[ref(more) = s1]);
+	sregex parens =
+		skip(_s)(*(as_xpr(')')));
+
+	while(!input.empty()){
+		if(regex_match(input, cond)){ // If there was a match, the variables will have data
+			remove_quotes(entry);  // Take off quotation marks from literal inputs
+			// DEBUG cout << "\nSuccessful condition match";
+			// DEBUG cout << "\nAttr :" << attr;
+			// DEBUG cout << "\nEntry:" << entry;
+			// DEBUG cout << "\nOp   :" << opr;
+			// DEBUG cout << "\nMore :" << more;
+			matches.push_back(result); // Result is currently just an empty vector
+			matches.back() = r->compare(attr, entry, opr); // Populate the vector with matches
+			input = more;
+		}
+		else if(regex_match(input, conjunction)){  // OR operation
+			symbol.push_back('|');
+			input = more;	
+		}
+		else if(regex_match(input, comparison)){  // AND operation
+			symbol.push_back('&');
+			input = more;
+		}
+		else if(regex_match(input, parens)){  // Nothing left, exit
+			// DEBUG cout << "\nEnd of condtion reached";
+			input = "";
+		}
+		else{
+			throw Error("\n **Parser Error: Invalid condition");
+		}
+	}
+	if((int) matches.size() == 1){ // Input was an expression with only one condition
+		return matches[0];
+	}
+	// Work through the matrix from the back, performing appropriate comparisons
+	// Ex: a &&(b ||(c)), does an OR on expr c and b, then an AND with the result and a.
+	vector< vector<bool> >::reverse_iterator matches_rit;
+	while(!symbol.empty()){
+		matches_rit = matches.rbegin();
+		vector<bool> last = *matches_rit;
+		vector<bool> next_to_last = *(++matches_rit);
+		switch(symbol.back()){
+			case '|':
+				for(int i = 0; i < r->size(); i++){
+					if((last[i] == 1) || (next_to_last[i] == 1)){
+						result[i] = true;
+					}
+				}
+				break;
+			case '&':
+				for(int i = 0; i < r->size(); i++){
+					// DEBUG cout << "\nLast: " << last[i] << " Next to last: " << next_to_last[i];
+					if((last[i] == 1) && (next_to_last[i] == 1)){
+						result[i] = true;
+					}
+					else{
+						result[i] = false;
+					}
+				}
+				break;
+		}
+		symbol.pop_back();  // This symbol has been dealt with
+		matches.pop_back(); // These two expressions have been evaluated
+		matches.pop_back();
+		matches.push_back(result); // Put the result of the previous two in the matrix
+	}
+	return matches[0];
+} // end condition
+
+/* temp_name():
+	Some relations are intermediate steps that are assigned no name.  In order
+	for the database to keep track of these, a temporary name is assigned.  Those
+	relations are then added to the database's vector of relations like any other.
+	The '$' is not permitted in identifiers in the grammar, so it is used to precede
+	the name.
+	Return:  string with temporary name
+*/
 string Parser::temp_name(){
 	string name = "$Temp";
 	std::ostringstream oss;
@@ -447,6 +487,9 @@ string Parser::temp_name(){
 	return oss.str();
 }
 
+/* show_vector(vector<string> &v, string title):
+	Helper function to show the values in a vector
+*/
 void Parser::show_vector(vector<string> &v, string title){
 	vector<string>::iterator it;
 	cout << "\n" << title << " contains: ";
@@ -454,10 +497,16 @@ void Parser::show_vector(vector<string> &v, string title){
 		cout << " " << *it;
 }
 
+/* remove_quotes(string &s):
+	Removes quotes from a string.
+*/
 void Parser::remove_quotes(string &s){
 	s.erase(remove(s.begin(), s.end(), '\"'), s.end());
 }
 
+/* remove_quotes(vector<string> &v):
+	Removes quotes from all the strings in a vector
+*/
 void Parser::remove_quotes(vector<string> &v){
 	vector<string>::iterator it;
 	for(it = v.begin(); it < v.end(); it++){
@@ -465,10 +514,17 @@ void Parser::remove_quotes(vector<string> &v){
 	}
 }
 
+/* remove_semicolons(string &s):
+	Removes semicolons from a string
+*/
 void Parser::remove_semicolons(string &s){
 	s.erase(remove(s.begin(), s.end(), ';'), s.end());
 }
 
+/* set_database(Database *database):
+	Establishes the parser's handle to the database object.
+	This is only called by the database on its parser object.
+*/
 void Parser::set_database(Database *database){
 	dbms = database;
 }

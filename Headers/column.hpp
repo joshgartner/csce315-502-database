@@ -1,6 +1,12 @@
 #ifndef _column_hpp
 #define _column_hpp
 
+/*
+File   : column.hpp
+Authors: John Wesson
+Team   : Team X
+*/
+
 #include <string>
 #include <vector>
 
@@ -13,17 +19,14 @@ const string INTEGER_ID = "INTEGER";
 enum column_type { int_type, string_type };
 
 class Column{
-private:
+public:
+	Column(string str_name, string type_id, bool b_is_primary_key);
+	Column(Column* from_column);
+
 	string name;
 	column_type type;
 	vector<string> data;
 	bool b_primary_key;
-
-public:
-	//Column(string strName,ColumnType column_type, vector<string> strings);
-	Column(string str_name, string type_id, bool b_is_primary_key);
-	//Column(string strName, vector<int> ints);
-	//Column(string strName, ColumnType columnType);
 
 	//void AddItem(Item item);
 	void add_items(vector<string> items);
@@ -36,6 +39,7 @@ public:
 	string get_name(){ return name; }
 	bool isPrimary(){ return b_primary_key; }
 	void set_name(string new_name){ name = new_name; }
+	bool contains(string item);
 
 	string get_item(int index);
 	vector<string> get_items();

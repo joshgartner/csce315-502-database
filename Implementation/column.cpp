@@ -1,6 +1,12 @@
 #include "column.hpp"
 #include "error.hpp"
 
+/*
+File   : column.cpp
+Authors: John Wesson
+Team   : Team X
+*/
+
 #include <iostream>  // For debug
 using std::cout;
 
@@ -20,6 +26,13 @@ Column::Column(string str_name, string type_id, bool b_is_primary_key){
 	b_primary_key = b_is_primary_key;
 }
 
+Column::Column(Column* from_column){
+       name = from_column->name;
+       b_primary_key = from_column->b_primary_key;
+       type = from_column->type;
+       data = from_column->data;
+}
+
 string Column::to_string(){
 	string str_column = (b_primary_key)? "1\n" : "0\n";
 	str_column += (type == int_type)? INTEGER_ID : VARCHAR_ID;
@@ -33,13 +46,16 @@ string Column::to_string(){
 }
 
 void Column::add_item(string item){
-	data.push_back(item);
+   if ((b_primary_key) && contains(item)){
+       throw Error("\n **Cannot have duplicate values under primary key.");
+   }
+   data.push_back(item);
 }
 
 void Column::add_items(vector<string> items){
-	for(unsigned int i = 0; i < items.size(); i++){
-		data.push_back(items[i]);
-	}
+   for(unsigned int i = 0; i < items.size(); i++){
+       add_item(items[i]);
+   }
 }
 
 string Column::get_item(int index){
@@ -53,6 +69,18 @@ void Column::set_item(int index, string item){
 
 vector<string> Column::get_items(){
 	return data;
+}
+
+bool Column::contains(string item){
+       bool b_contains = false;
+
+       for (int i = 0; i < (int) data.size(); i++){
+               if (item == data[i]){
+                       b_contains = true;
+               }
+       }
+
+       return b_contains;
 }
 
 vector<string> Column::get_items(int start, int end){

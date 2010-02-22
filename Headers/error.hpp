@@ -1,11 +1,20 @@
 #ifndef _error_hpp_      // include file only once
 #define _error_hpp_
 
+/*
+File   : error.hpp
+Authors: Darren White
+Team   : Team X
+*/
+
 #include <string>
 #include <exception>
 
 using namespace std;
 
+/* class Error:
+	A class for throwing errors.  Extends the std::exception class
+*/
 class Error : public exception{
 public:
 	string message;
