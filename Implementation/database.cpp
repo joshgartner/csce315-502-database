@@ -137,7 +137,6 @@ void Database::load(string table_name){
 
 	int num_columns;
 	int num_tuples;
-	string str_type;     //VARCHAR or INTEGER
 	int is_primary_key;  //1 or 0
 	char str_name[256];  //the name of the attribute
 	char str_entry[256];
@@ -147,12 +146,13 @@ void Database::load(string table_name){
 
 	for(int i = 0; i < num_columns; i++){
 		fs >> is_primary_key;
-		fs >> str_type;
 		fs.get();  //trash the next \n
 		fs.getline(str_name, 256);
 
+		//create a column based on retrieved values
 		Column new_column = Column((string)str_name, str_type, (is_primary_key == 1));
 
+		//retrieve the data and add it to Column
 		for(int k = 0; k < num_tuples; k++){
 			fs.getline(str_entry, 256);
 			new_column.add_item((string)str_entry);
